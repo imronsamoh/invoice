@@ -200,3 +200,94 @@ pvForm.addEventListener('submit', async (e) => {
         document.querySelector('[data-page="dashboard"]').click(); 
     }
 });
+// เก็บข้อมูลแต่ละบรรทัดไว้ใน Array
+let documentItems = [];
+
+// ฟังก์ชันเพิ่มบรรทัดใหม่
+function addNewRow() {
+    const rowId = Date.now(); // สร้าง ID จำลอง
+    const newRow = {
+        id: rowId,
+        description: '',
+        qty: 1,
+        unit_price: 0,
+        discount: 0,
+        is_vat: true,
+        is_wht: true
+    };
+    documentItems.push(newRow);
+    renderTable();
+}
+
+// ฟังก์ชันวาดตารางและคำนวณ
+function renderTable() {
+    const tbody = document.getElementById('items_body');
+    tbody.innerHTML = ''; // ล้างค่าเดิม
+    
+    let totalBase = 0;
+    let totalVatBase = 0;
+    let totalWhtBase = 0;
+
+    documentItems.forEach((item, index) => {
+        const lineTotal = (item.qty * item.unit_price) - item.discount;
+        totalBase += lineTotal;
+        
+        // แยกยอดเพื่อนำไปคิดภาษีตอนท้าย
+        if (item.is_vat) totalVatBase += lineTotal;
+        if (item.is_wht) totalWhtBase += lineTotal;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" value="${item.description}" onchange="updateItem(${index}, 'description', this.value)" placeholder="รายละเอียด"></td>
+            <td><input type="number" value="${item.qty}" onchange="updateItem(${index}, 'qty', this.value)"></td>
+            <td><input type="number" value="${item.unit_price}" onchange="updateItem(${index}, 'unit_price', this.value)"></td>
+            <td><input type="number" value="${item.discount}" onchange="updateItem(${index}, 'discount', this.value)"></td>
+            <td style="text-align: center;"><input type="checkbox" ${item.is_vat ? 'checked' : ''} onchange="updateItem(${index}, 'is_vat', this.checked)"></td>
+            <td style="text-align: center;"><input type="checkbox" ${item.is_wht ? 'checked' : ''} onchange="updateItem(${index}, 'is_wht', this.checked)"></td>
+            <td style="text-align: right; font-weight: bold;">฿${lineTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+            <td><button class="btn-danger" onclick="removeRow(${index})">X</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // เรียกฟังก์ชันคำนวณ Grand Total รวมทั้งเอกสาร (จากยอด totalVatBase และ totalWhtBase)
+    calculateGrandTotal(totalBase, totalVatBase, totalWhtBase);
+}
+
+// ฟังก์ชันอัปเดตค่าเมื่อพิมพ์
+function updateItem(index, field, value) {
+    if (['qty', 'unit_price', 'discount'].includes(field)) {
+        documentItems[index][field] = parseFloat(value) || 0;
+    } else {
+        documentItems[index][field] = value;
+    }
+    renderTable(); // วาดและคำนวณใหม่ทันที
+}
+
+// ลบบรรทัด
+function removeRow(index) {
+    documentItems.splice(index, 1);
+    renderTable();
+}
+
+// ระบบแสดง Thumbnail เมื่อเลือกไฟล์
+document.getElementById('file_upload').addEventListener('change', function(e) {
+    const files = e.target.files;
+    const grid = document.getElementById('thumbnail_grid');
+    
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.style = "width: 100px; height: 100px; border-radius: 8px; overflow: hidden; position: relative;";
+            
+            if(file.type.startsWith('image/')) {
+                div.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            } else if (file.type === 'application/pdf') {
+                div.innerHTML = `<div style="background: #f4f4f5; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:red; font-weight:bold;">PDF</div>`;
+            }
+            grid.appendChild(div);
+        }
+        reader.readAsDataURL(file);
+    });
+});
