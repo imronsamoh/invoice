@@ -455,7 +455,86 @@
                 </div>
 
 
+<div id="view-create-receipt" class="page-view" style="display: none;">
+                    <h2>หนังสือรับรองแทนใบเสร็จรับเงิน</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">ใช้เมื่อผู้รับเงินไม่สามารถออกใบเสร็จรับเงินที่ถูกต้องได้</p>
+                    <div class="glass-panel form-container">
+                        <form id="receipt-form">
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>วันที่</label>
+                                    <input type="date" id="rc_date" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>ชื่อผู้รับเงิน (ข้าพเจ้า)</label>
+                                    <input type="text" id="rc_name" placeholder="นาย / นางสาว..." required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>เลขประจำตัวประชาชน (13 หลัก)</label>
+                                    <input type="text" id="rc_citizen_id" maxlength="13" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>ที่อยู่ผู้รับเงิน</label>
+                                    <input type="text" id="rc_address" placeholder="บ้านเลขที่, ถนน, ตำบล, อำเภอ, จังหวัด" required>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>รายละเอียดการจ่ายเงิน (เพื่อจ่ายค่า...)</label>
+                                <input type="text" id="rc_desc" placeholder="เช่น ค่าแรงเหมาจ่าย, ค่าจ้างขนของ..." required>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>จำนวนเงินรวม (บาท)</label>
+                                    <input type="number" id="rc_amount" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกหนังสือรับรองฯ</button>
+                        </form>
+                    </div>
+                </div>
 
+                <div id="view-create-pr" class="page-view" style="display: none;">
+                    <h2>สร้างใบเบิกจ่าย (Payment Requisition)</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">ใช้สำหรับพนักงานหรือแผนกเพื่อขออนุมัติเบิกเงิน</p>
+                    <div class="glass-panel form-container">
+                        <form id="pr-form">
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>วันที่ขอเบิก</label>
+                                    <input type="date" id="pr_date" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>ชื่อผู้ขอเบิก</label>
+                                    <input type="text" id="pr_name" placeholder="ระบุชื่อพนักงาน" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>แผนก / ฝ่าย</label>
+                                    <input type="text" id="pr_dept" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>กำหนดวันที่ต้องการใช้เงิน</label>
+                                    <input type="date" id="pr_due_date" required>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>วัตถุประสงค์การเบิก</label>
+                                <input type="text" id="pr_desc" placeholder="เช่น ซื้ออุปกรณ์สำนักงาน, ค่าเดินทาง..." required>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>จำนวนเงินที่ขอเบิก (บาท)</label>
+                                    <input type="number" id="pr_amount" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกใบเบิกจ่าย</button>
+                        </form>
+                    </div>
+                </div>
+                
                 <div id="view-print" class="page-view" style="display: none;">
                     <div class="print-actions no-print" style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
                         <button class="btn-outline" onclick="document.querySelector('[data-page=\'document-list\']').click()">⬅ กลับไปหน้ารายการ</button>
