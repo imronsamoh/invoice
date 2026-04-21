@@ -26,7 +26,7 @@ body { background: var(--bg); color: var(--text); font-size: 14px; line-height: 
 
 /* ── Login Section ── */
 .login-wrap { display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: var(--bg); z-index: 9999; position: fixed; inset: 0; }
-.login-box { background: var(--surface); padding: 40px; border-radius: var(--r-lg); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+.login-box { background: var(--surface); padding: 40px;  border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
 .login-box h2 { margin-bottom: 5px; color: var(--text); }
 .login-box p { color: var(--text-2); margin-bottom: 20px; font-size: 13px; }
 
