@@ -168,6 +168,11 @@
                         <div class="sec-title">รายการเอกสารทั้งหมด</div>
                         <div class="sec-sub">รวม PV, RC, PR</div>
                     </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="window.showAlert('info', 'กำลังพัฒนา', 'ฟีเจอร์ส่งออก Excel/CSV จะมาในเร็วๆ นี้')">
+                            <i class="fa-solid fa-file-export"></i> ส่งออก
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="tabs">
@@ -177,9 +182,14 @@
                   <div class="tab" onclick="window.filterTab(this, 'paid')">ชำระแล้ว</div>
                 </div>
 
-               
-                
                 <div class="panel">
+                    <div class="search-row" style="padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; background: var(--surface);">
+                        <div class="search-wrap" style="position: relative; flex: 1;">
+                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 12px;"></i>
+                            <input class="search-input" id="search-doc-input" type="text" placeholder="ค้นหาเลขที่เอกสาร, ผู้รับเงิน..." style="width: 100%; height: 32px; padding: 0 10px 0 32px; border: 1px solid var(--border); border-radius: var(--r); background: var(--bg);">
+                        </div>
+                    </div>
+
                     <table>
                         <thead>
                             <tr>
