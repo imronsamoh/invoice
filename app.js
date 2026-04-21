@@ -1,6 +1,52 @@
 import { supabase } from './supabaseClient.js';
 
 // ==========================================
+// 1. ระบบ UI (Alerts, Modals, Tabs, Navigation)
+// ==========================================
+let alertIdCounter = 0;
+window.showAlert = (type, title, msg) => {
+    const icons = { success: 'fa-circle-check', warn: 'fa-triangle-exclamation', danger: 'fa-circle-xmark', info: 'fa-circle-info' };
+    const id = 'toast_' + (++alertIdCounter);
+    const container = document.getElementById('alertsContainer');
+    const el = document.createElement('div');
+    el.className = `alert-toast alert-${type}`;
+    el.id = id;
+    el.innerHTML = `
+        <div class="alert-icon"><i class="fa-solid ${icons[type]}"></i></div>
+        <div style="flex:1"><div class="alert-title">${title}</div><div class="alert-msg">${msg}</div></div>
+        <div class="alert-bar" style="width:100%"></div>
+    `;
+    container.appendChild(el);
+    setTimeout(() => { if(document.getElementById(id)) document.getElementById(id).remove() }, 3500);
+};
+
+// Modals
+window.openModal = (id) => document.getElementById(id).classList.add('open');
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+    m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+
+// Navigation
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        navItems.forEach(n => n.classList.remove('active'));
+        pages.forEach(p => p.classList.remove('active'));
+        item.classList.add('active');
+        const target = item.getAttribute('data-page');
+        document.getElementById(`page-${target}`).classList.add('active');
+        document.getElementById('breadcrumb').textContent = item.textContent.trim();
+        document.getElementById('sidebar').classList.remove('open');
+        if (target === 'docs' || target === 'dashboard') window.loadDocuments();
+    });
+});
+document.getElementById('menu-toggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); });
+
+// ==========================================
 // ส่วนที่ 1: การจัดการ Auth และเข้าสู่ระบบ
 // ==========================================
 const loginSection = document.getElementById('login-section');
