@@ -133,11 +133,14 @@ window.loadDocuments = async () => {
                 <td style="text-align:right; font-weight:600;">${formatTHB(doc.net_amount)}</td>
                 <td style="text-align:center;">${badge}</td>
                 <td style="text-align:center;">
+                    <td style="text-align:center;">
                     <div style="display:flex; justify-content:center; gap:4px">
                         <button class="btn btn-secondary btn-sm btn-icon" title="พิมพ์" onclick="printDoc('${doc.id}')"><i class="fa-solid fa-print"></i></button>
-                        <button class="btn btn-secondary btn-sm btn-icon" title="เปลี่ยนสถานะ" onclick="window.confirmStatus('${doc.id}', '${doc.doc_no}', '${doc.status}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn btn-secondary btn-sm btn-icon" title="แก้ไขเอกสาร" onclick="window.showAlert('info', 'กำลังพัฒนา', 'ฟีเจอร์แก้ไขดึงข้อมูลเก่ามาทำใหม่ จะมาในเร็วๆ นี้')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn btn-secondary btn-sm btn-icon" title="เปลี่ยนสถานะ" onclick="window.confirmStatus('${doc.id}', '${doc.doc_no}', '${doc.status}')"><i class="fa-solid fa-tags" style="color:var(--accent)"></i></button>
                         <button class="btn btn-secondary btn-sm btn-icon" title="ลบ" onclick="window.confirmDelete('${doc.id}', '${doc.doc_no}')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>
                     </div>
+                
                 </td>
             </tr>
         `;
