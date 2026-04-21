@@ -1,471 +1,550 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowAccount · ระบบเอกสารบัญชีอัจฉริยะ</title>
-    <!-- ฟอนต์หลัก: Sarabun + Inter เสริมให้ทันสมัย -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- ไอคอน Lucide (สะอาด คมชัด) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Supabase -->
+
+    <title>ระบบจัดทำเอกสารบัญชี (Mini-ERP)</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        /* ===== RESET & VARIABLES ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
-        :root {
-            --bg-page: #f5f7fc;
-            --surface-white: #ffffff;
-            --sidebar-bg: #0f172a;
-            --sidebar-accent: #2d3a5e;
-            --primary: #2469f5;
-            --primary-light: #e9efff;
-            --primary-dark: #1a4ab5;
-            --success: #10b981;
-            --success-soft: #e3f9ee;
-            --warning: #f59e0b;
-            --warning-soft: #fef4e6;
-            --danger: #ef4444;
-            --danger-soft: #fee9e9;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --text-sidebar: #cbd5e1;
-            --border-light: #e2e8f0;
-            --shadow-card: 0 8px 20px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.03);
-            --shadow-pop: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
-            --radius-md: 12px;
-            --radius-lg: 20px;
-            --transition: all 0.2s ease;
-        }
-
-        body {
-            font-family: 'Sarabun', 'Inter', sans-serif;
-            background: var(--bg-page);
-            color: var(--text-main);
-            line-height: 1.5;
-        }
-
-        /* ===== LOGIN PAGE (สไตล์ใหม่) ===== */
-        #login-section {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at 10% 20%, #e6edfb, #d9e4f5);
-        }
-        .login-box {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-            padding: 2.8rem 2.5rem;
-            width: 100%;
-            max-width: 420px;
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-        .login-box h2 {
-            font-weight: 600;
-            font-size: 2rem;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.4rem;
-            color: #0b1e3c;
-        }
-        .login-box p { color: var(--text-muted); margin-bottom: 2rem; }
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
-        .input-group label {
-            display: block;
-            font-weight: 500;
-            font-size: 0.9rem;
-            margin-bottom: 0.4rem;
-            color: var(--text-main);
-        }
-        .input-group input {
-            width: 100%;
-            padding: 0.9rem 1rem;
-            border: 1.5px solid var(--border-light);
-            border-radius: 18px;
-            font-size: 1rem;
-            transition: var(--transition);
-            background: white;
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(36,105,245,0.1);
-        }
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 0.9rem 1.5rem;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            transition: var(--transition);
-            box-shadow: 0 4px 8px rgba(36,105,245,0.2);
-        }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .error-text { color: var(--danger); font-size: 0.9rem; margin-top: 0.8rem; }
-
-        /* ===== APP LAYOUT ===== */
-        .app-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* ----- SIDEBAR ใหม่ ----- */
-        .sidebar {
-            width: 280px;
-            background: var(--sidebar-bg);
-            color: var(--text-sidebar);
-            display: flex;
-            flex-direction: column;
-            padding: 1.8rem 1.2rem;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            border-right: 1px solid #1e293b;
-        }
-        .sidebar-header h3 {
-            font-weight: 600;
-            font-size: 1.6rem;
-            color: white;
-            margin-bottom: 2.5rem;
-            padding-left: 0.8rem;
-            letter-spacing: -0.5px;
-        }
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            flex: 1;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0.9rem 1rem;
-            border-radius: 14px;
-            color: var(--text-sidebar);
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-        .nav-item i { width: 22px; height: 22px; opacity: 0.8; }
-        .nav-item:hover { background: #1e293b; color: white; }
-        .nav-item.active { background: #1e3a8a; color: white; box-shadow: 0 6px 10px rgba(0,0,0,0.2); }
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid #334155;
-            color: #e2e8f0;
-            border-radius: 30px;
-            padding: 0.75rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .btn-outline:hover { background: #1e293b; border-color: #64748b; }
-
-        /* ----- MAIN CONTENT ----- */
-        .main-content {
-            flex: 1;
-            background: var(--bg-page);
-            padding: 1.8rem 2.2rem;
-            overflow-y: auto;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .user-info {
-            background: white;
-            padding: 0.5rem 1.3rem;
-            border-radius: 40px;
-            box-shadow: var(--shadow-card);
-            font-weight: 500;
-            border: 1px solid var(--border-light);
-        }
-        .mobile-only { display: none; background: white; border: none; font-size: 1.5rem; }
-
-        /* ----- CARDS & DASHBOARD ----- */
-        .page-view h2 { font-weight: 600; margin-bottom: 1.8rem; font-size: 1.9rem; }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2,1fr);
-            gap: 1.5rem;
-        }
-        .stat-card {
-            background: white;
-            padding: 1.8rem 1.8rem;
-            border-radius: 24px;
-            box-shadow: var(--shadow-card);
-            border: 1px solid #f1f5f9;
-        }
-        .stat-card h3 { font-weight: 500; color: var(--text-muted); font-size: 1rem; margin-bottom: 0.5rem; }
-        .stat-number { font-size: 2.8rem; font-weight: 700; color: var(--primary); }
-
-        /* ----- ตารางสไตล์ใหม่ ----- */
-        .glass-panel {
-            background: white;
-            border-radius: 24px;
-            box-shadow: var(--shadow-pop);
-            border: 1px solid #f0f4fe;
-            overflow: hidden;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .data-table th {
-            text-align: left;
-            padding: 1.2rem 1rem;
-            background: #fafcff;
-            font-weight: 600;
-            color: #334155;
-            border-bottom: 1px solid var(--border-light);
-        }
-        .data-table td {
-            padding: 1.1rem 1rem;
-            border-bottom: 1px solid #edf2f7;
-        }
-
-        /* ----- FORM PV สวยงาม ----- */
-        .form-container { padding: 2rem; }
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            margin-bottom: 1.2rem;
-        }
-        .status-badge {
-            background: #eef2ff;
-            color: var(--primary);
-            padding: 0.4rem 1.2rem;
-            border-radius: 30px;
-            font-weight: 500;
-        }
-        .status-dropdown {
-            padding: 0.7rem 1rem;
-            border-radius: 16px;
-            border: 1.5px solid var(--border-light);
-            background: white;
-        }
-        .item-table th {
-            background: #f8fafc;
-            padding: 0.8rem 0.5rem;
-            font-weight: 500;
-        }
-        .item-table td { padding: 0.6rem 0.3rem; }
-        .summary-box {
-            background: #f9fbfe;
-            border-radius: 24px;
-            padding: 1.6rem;
-            border: 1px solid #eef2f6;
-        }
-        .attachment-section { background: #fdfdfe; }
-
-        /* ปรับแต่ง responsive */
-        @media (max-width: 768px) {
-            .sidebar { position: fixed; z-index: 40; left: -100%; transition: 0.2s; }
-            .sidebar.open { left: 0; }
-            .mobile-only { display: block; }
-            .main-content { padding: 1rem; }
-            .stats-grid { grid-template-columns: 1fr; }
-        }
-
-        /* thumbnail grid */
-        .thumbnail-grid img {
-            width: 70px; height: 70px; object-fit: cover;
-            border-radius: 16px; border: 1px solid var(--border-light);
-        }
-        .btn-outline.small { padding: 0.3rem 1rem; width: auto; }
-    </style>
 </head>
+
 <body>
 
-    <!-- ส่วนล็อกอิน -->
-    <div id="login-section" class="container">
+    <div id="login-section" class="container glass-panel">
+
         <div class="login-box">
-            <h2>FlowAccount</h2>
-            <p>ลงชื่อเข้าใช้ · ระบบเอกสารบัญชีอัจฉริยะ</p>
+
+            <h2>เข้าสู่ระบบ</h2>
+
+            <p>ระบบจัดการเอกสารบัญชีและการเงิน</p>
+
             <form id="login-form">
+
                 <div class="input-group">
-                    <label>อีเมลองค์กร</label>
+
+                    <label for="email">อีเมล</label>
+
                     <input type="email" id="email" required placeholder="name@company.com">
+
                 </div>
+
                 <div class="input-group">
-                    <label>รหัสผ่าน</label>
+
+                    <label for="password">รหัสผ่าน</label>
+
                     <input type="password" id="password" required placeholder="••••••••">
+
                 </div>
+
                 <button type="submit" id="login-btn" class="btn-primary">เข้าสู่ระบบ</button>
+
             </form>
+
             <p id="login-error" class="error-text" style="display: none;"></p>
+
         </div>
+
     </div>
 
-    <!-- ส่วนแอปหลัก -->
     <div id="app-section" class="app-layout" style="display: none;">
+
         
+
         <aside class="sidebar" id="sidebar">
+
             <div class="sidebar-header">
-                <h3>FlowAccount</h3>
+
+                <h3>UM Accounting</h3>
+
             </div>
+
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="dashboard"><i data-lucide="layout-dashboard"></i> ภาพรวม</a>
-                <a href="#" class="nav-item" data-page="document-list"><i data-lucide="files"></i> เอกสารทั้งหมด</a>
-                <a href="#" class="nav-item" data-page="create-pv"><i data-lucide="file-plus"></i> สร้างใบสำคัญจ่าย</a>
-                <a href="#" class="nav-item" data-page="company-settings"><i data-lucide="building"></i> ตั้งค่าบริษัท</a>
-                <button id="logout-btn" class="btn-outline" style="margin-top: 2rem;"><i data-lucide="log-out" style="width: 18px;"></i> ออกจากระบบ</button>
+
+                <a href="#" class="nav-item active" data-page="dashboard">ภาพรวม (Dashboard)</a>
+
+                <a href="#" class="nav-item" data-page="document-list">รายการเอกสารทั้งหมด</a>
+
+                <a href="#" class="nav-item" data-page="create-pv">สร้างใบสำคัญจ่าย (PV)</a>
+
+                <a href="#" class="nav-item" data-page="company-settings">ตั้งค่าบริษัท (Profile)</a>
+
+                <button id="logout-btn" class="btn-outline" style="margin-top: 2rem; width: 100%;">ออกจากระบบ</button>
+
             </nav>
+
         </aside>
 
         <main class="main-content">
+
             <header class="topbar">
-                <button id="menu-toggle" class="mobile-only">☰</button>
+
+                <button id="menu-toggle" class="mobile-only">☰ เมนู</button>
+
                 <div class="user-info">
+
                     <span id="user-email">user@email.com</span>
+
                 </div>
+
             </header>
+
             
+
             <div id="page-content" class="content-area">
+
                 
-                <!-- Dashboard View -->
+
                 <div id="view-dashboard" class="page-view">
-                    <h2>ภาพรวมทางการเงิน</h2>
+
+                    <h2>ภาพรวมระบบ (Dashboard)</h2>
+
                     <div class="stats-grid">
+
                         <div class="stat-card">
-                            <h3>⏳ รออนุมัติ</h3>
+
+                            <h3>เอกสารรออนุมัติ</h3>
+
                             <p class="stat-number" id="stat-pending">0</p>
+
                         </div>
+
                         <div class="stat-card">
-                            <h3>💰 จ่ายแล้ว (เดือนนี้)</h3>
+
+                            <h3>จ่ายแล้ว (เดือนนี้)</h3>
+
                             <p class="stat-number" id="stat-paid">฿0.00</p>
+
                         </div>
+
                     </div>
+
                 </div>
 
-                <!-- Document List -->
                 <div id="view-document-list" class="page-view" style="display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.8rem;">
-                        <h2>📋 รายการเอกสาร</h2>
-                        <button class="btn-primary" style="width: auto; padding: 0.7rem 1.5rem;" onclick="document.querySelector('[data-page=\'create-pv\']').click()">+ เอกสารใหม่</button>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+
+                        <h2>รายการเอกสารทั้งหมด</h2>
+
+                        <button class="btn-primary" style="width: auto; padding: 0.5rem 1rem;" onclick="document.querySelector('[data-page=\'create-pv\']').click()">+ สร้างเอกสารใหม่</button>
+
                     </div>
-                    <div class="glass-panel">
+
+                    <div class="glass-panel" style="padding: 1rem; overflow-x: auto;">
+
                         <table class="data-table" id="main_doc_list">
-                            <thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้รับเงิน</th><th>ยอดสุทธิ</th><th>สถานะ</th><th></th></tr></thead>
-                            <tbody id="doc_list_body"><tr><td colspan="6" style="text-align:center;">กำลังโหลด...</td></tr></tbody>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>เลขที่เอกสาร</th>
+
+                                    <th>วันที่</th>
+
+                                    <th>ผู้รับเงิน</th>
+
+                                    <th>ยอดสุทธิ</th>
+
+                                    <th>สถานะ</th>
+
+                                    <th>จัดการ</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="doc_list_body">
+
+                                <tr><td colspan="6" style="text-align: center;">กำลังโหลดข้อมูล...</td></tr>
+
+                            </tbody>
+
                         </table>
+
                     </div>
+
                 </div>
 
-                <!-- Create PV -->
                 <div id="view-create-pv" class="page-view" style="display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-                        <h2>📄 ใบสำคัญจ่าย (Payment Voucher)</h2>
-                        <span class="status-badge" id="doc_status_badge">● ร่าง</span>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+
+                        <h2>ใบสำคัญจ่าย (Payment Voucher)</h2>
+
+                        <div class="status-badge draft" id="doc_status_badge">สถานะ: ร่าง (Draft)</div>
+
                     </div>
+
+                    
+
                     <div class="glass-panel form-container">
+
                         <form id="pv-form">
+
                             <div class="form-row">
-                                <div class="input-group" style="flex:1;">
-                                    <label>วันที่เอกสาร</label>
-                                    <input type="date" id="doc_date" required style="width:100%;">
+
+                                <div class="input-group">
+
+                                    <label>วันที่เอกสาร (ISO Format)</label>
+
+                                    <input type="date" id="doc_date" required>
+
                                 </div>
-                                <div class="input-group" style="flex:2;">
-                                    <label>ผู้รับเงิน / Vendor</label>
-                                    <input type="text" id="vendor_name" placeholder="บริษัท หรือชื่อบุคคล" required>
+
+                                <div class="input-group">
+
+                                    <label>ชื่อผู้รับเงิน / Vendor</label>
+
+                                    <input type="text" id="vendor_name" placeholder="บริษัท / นาย / นางสาว..." required>
+
                                 </div>
-                                <div class="input-group" style="flex:1;">
-                                    <label>สถานะ</label>
+
+                                <div class="input-group">
+
+                                    <label>สถานะเอกสาร</label>
+
                                     <select id="doc_status_select" class="status-dropdown">
-                                        <option value="draft">ร่าง</option><option value="pending">รออนุมัติ</option><option value="approved">อนุมัติ</option><option value="paid">ชำระแล้ว</option>
+
+                                        <option value="draft">ร่าง (Draft)</option>
+
+                                        <option value="pending">รออนุมัติ (Pending)</option>
+
+                                        <option value="approved">อนุมัติแล้ว (Approved)</option>
+
+                                        <option value="paid">ชำระเงินแล้ว (Paid)</option>
+
                                     </select>
+
+                                </div>
+
+                            </div>
+
+                            
+
+                            <div class="input-group">
+
+                                <label>รายละเอียด / หมายเหตุ</label>
+
+                                <input type="text" id="remarks" placeholder="ระบุเหตุผลการจ่ายเงิน...">
+
+                            </div>
+
+                            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--border-color);">
+
+                            <h3>รายการสินค้า / บริการ</h3>
+
+                            <div style="overflow-x: auto; margin-top: 1rem;">
+
+                                <table class="item-table" id="items_table" style="width: 100%; min-width: 800px;">
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>รายละเอียด</th>
+
+                                            <th width="10%">จำนวน</th>
+
+                                            <th width="15%">ราคา/หน่วย</th>
+
+                                            <th width="10%">ส่วนลด</th>
+
+                                            <th width="8%" style="text-align: center;">VAT 7%</th>
+
+                                            <th width="8%" style="text-align: center;">หัก ณ ที่จ่าย</th>
+
+                                            <th width="15%" style="text-align: right;">รวม</th>
+
+                                            <th width="5%"></th>
+
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody id="items_body">
+
+                                        </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <button type="button" class="btn-outline" onclick="addNewRow()" style="margin-top: 1rem; width: auto; padding: 0.5rem 1rem;">+ เพิ่มรายการ</button>
+
+                            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--border-color);">
+
+                            <div class="form-row" style="align-items: flex-start;">
+
+                                
+
+                                <div class="attachment-section" style="flex: 1; padding: 1rem; border: 2px dashed var(--border-color); border-radius: 8px;">
+
+                                    <h3>แนบเอกสารประกอบ</h3>
+
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">รองรับไฟล์รูปภาพและ PDF</p>
+
+                                    <input type="file" id="file_upload" multiple accept="image/*,.pdf" style="display: none;">
+
+                                    <button type="button" class="btn-outline" onclick="document.getElementById('file_upload').click()">เลือกไฟล์</button>
+
+                                    <div id="thumbnail_grid" class="thumbnail-grid" style="display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap;">
+
+                                        </div>
+
+                                </div>
+
+                                <div class="summary-box" style="flex: 1; min-width: 300px;">
+
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+
+                                        <span>รวมเป็นเงิน:</span>
+
+                                        <span id="summary_base">฿0.00</span>
+
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #ef4444;">
+
+                                        <span>ส่วนลดรวม:</span>
+
+                                        <span id="summary_discount">-฿0.00</span>
+
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+
+                                        <span>ยอดหลังหักส่วนลด:</span>
+
+                                        <span id="summary_after_discount">฿0.00</span>
+
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+
+                                        <span>ภาษีมูลค่าเพิ่ม (VAT 7%):</span>
+
+                                        <span id="summary_vat">฿0.00</span>
+
+                                    </div>
+
+                                    
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; color: #ef4444;">
+
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+
+                                            <span>ภาษีหัก ณ ที่จ่าย:</span>
+
+                                            <select id="global_wht_rate" style="padding: 0.2rem; width: auto;">
+
+                                                <option value="0">0%</option>
+
+                                                <option value="1">1%</option>
+
+                                                <option value="3" selected>3%</option>
+
+                                                <option value="5">5%</option>
+
+                                            </select>
+
+                                        </div>
+
+                                        <span id="summary_wht">-฿0.00</span>
+
+                                    </div>
+
+                                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 0.5rem 0;">
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+
+                                        <span style="font-weight: 600;">ยอดสุทธิที่ต้องจ่าย (Net):</span>
+
+                                        <strong id="net_amount_display" style="font-size: 1.5rem; color: #10b981;">฿0.00</strong>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+
+                                <button type="button" class="btn-outline" style="width: auto;" id="cancel_btn">ยกเลิก</button>
+
+                                <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 2rem;">บันทึกเอกสาร</button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+                <div id="view-company-settings" class="page-view" style="display: none;">
+
+                    <h2>ตั้งค่าบริษัท (Company Profile)</h2>
+
+                    <p style="color: var(--text-muted);">ข้อมูลส่วนนี้จะถูกนำไปแสดงเป็นหัวเอกสารเวลาพิมพ์ PDF</p>
+
+                    <div class="glass-panel form-container" style="max-width: 600px;">
+
+                        <form id="company-form">
+
+                            <div class="input-group" style="text-align: center;">
+
+                                <img id="company_logo_preview" src="https://via.placeholder.com/150" alt="Logo Preview" style="width: 150px; height: 150px; object-fit: contain; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background: #fff;">
+
+                                <input type="file" id="company_logo_upload" accept="image/*" style="display: none;">
+
+                                <div><button type="button" class="btn-outline" style="width: auto; padding: 0.5rem 1rem;" onclick="document.getElementById('company_logo_upload').click()">เปลี่ยนโลโก้</button></div>
+
+                            </div>
+
+                            <div class="input-group">
+
+                                <label>ชื่อบริษัท / กิจการ</label>
+
+                                <input type="text" id="comp_name" required>
+
+                            </div>
+
+                            <div class="input-group">
+
+                                <label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>
+
+                                <input type="text" id="comp_tax_id" maxlength="13">
+
+                            </div>
+
+                            <div class="input-group">
+
+                                <label>ที่อยู่สำนักงาน</label>
+
+                                <textarea id="comp_address" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;" required></textarea>
+
+                            </div>
+
+                            <div class="input-group">
+
+                                <label>เบอร์โทรศัพท์</label>
+
+                                <input type="text" id="comp_phone">
+
+                            </div>
+
+                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกการตั้งค่า</button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+
+
+                <div id="view-print" class="page-view" style="display: none;">
+                    <div class="print-actions no-print" style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
+                        <button class="btn-outline" onclick="document.querySelector('[data-page=\'document-list\']').click()">⬅ กลับไปหน้ารายการ</button>
+                        <button class="btn-primary" onclick="window.print()">🖨️ สั่งพิมพ์ / Save as PDF</button>
+                    </div>
+
+                    <div class="a4-paper" id="print-document-container">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <img id="print_logo" src="" alt="Logo" style="max-height: 80px; max-width: 150px; display: none;">
+                                <div>
+                                    <h2 id="print_comp_name" style="margin: 0; font-size: 1.5rem;">ชื่อบริษัท</h2>
+                                    <p id="print_comp_address" style="margin: 0; font-size: 0.9rem; color: #333;"></p>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #333;">เลขประจำตัวผู้เสียภาษี: <span id="print_comp_tax"></span> | โทร: <span id="print_comp_phone"></span></p>
                                 </div>
                             </div>
-                            <div class="input-group">
-                                <label>รายละเอียด / หมายเหตุ</label>
-                                <input type="text" id="remarks" placeholder="ระบุเหตุผลการจ่าย...">
+                            <div style="text-align: right;">
+                                <h1 style="margin: 0; font-size: 1.8rem; color: #000;">ใบสำคัญจ่าย</h1>
+                                <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">(Payment Voucher)</p>
                             </div>
+                        </div>
 
-                            <hr style="margin: 2rem 0; border: 0; border-top: 1.5px solid #eef2f6;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                            <div style="flex: 1;">
+                                <p><strong>จ่ายให้แก่:</strong> <span id="print_vendor_name"></span></p>
+                                <p><strong>รายละเอียด:</strong> <span id="print_remarks"></span></p>
+                            </div>
+                            <div style="flex: 1; text-align: right;">
+                                <p><strong>เลขที่เอกสาร:</strong> <span id="print_doc_no"></span></p>
+                                <p><strong>วันที่:</strong> <span id="print_doc_date"></span></p>
+                            </div>
+                        </div>
 
-                            <h3>🛒 รายการสินค้า / บริการ</h3>
-                            <div style="overflow-x: auto; margin: 1.2rem 0;">
-                                <table class="item-table" style="width:100%; min-width:900px;">
-                                    <thead><tr><th>รายละเอียด</th><th>จำนวน</th><th>ราคา/หน่วย</th><th>ส่วนลด</th><th>VAT</th><th>หัก ณ ที่จ่าย</th><th>รวม</th><th></th></tr></thead>
-                                    <tbody id="items_body"></tbody>
+                        <table class="print-table" style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #000; padding: 8px; text-align: left;">รายการ</th>
+                                    <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 10%;">จำนวน</th>
+                                    <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 15%;">ราคา/หน่วย</th>
+                                    <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 15%;">ส่วนลด</th>
+                                    <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 20%;">รวมเป็นเงิน</th>
+                                </tr>
+                            </thead>
+                            <tbody id="print_items_body">
+                                </tbody>
+                        </table>
+
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="flex: 1.5;">
+                                <div style="display: flex; justify-content: space-around; margin-top: 3rem; text-align: center;">
+                                    <div>
+                                        <p>_______________________</p>
+                                        <p>ผู้จัดทำเอกสาร</p>
+                                    </div>
+                                    <div>
+                                        <p>_______________________</p>
+                                        <p>ผู้อนุมัติ</p>
+                                    </div>
+                                    <div>
+                                        <p>_______________________</p>
+                                        <p>ผู้รับเงิน</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="flex: 1; margin-left: 2rem;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr><td style="padding: 4px;">มูลค่าสินค้า/บริการ:</td><td style="text-align: right;" id="print_total_base">฿0.00</td></tr>
+                                    <tr><td style="padding: 4px;">ภาษีมูลค่าเพิ่ม (VAT):</td><td style="text-align: right;" id="print_total_vat">฿0.00</td></tr>
+                                    <tr><td style="padding: 4px; color: red;">ภาษีหัก ณ ที่จ่าย:</td><td style="text-align: right; color: red;" id="print_total_wht">-฿0.00</td></tr>
+                                    <tr>
+                                        <td style="padding: 8px; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000;">ยอดจ่ายสุทธิ:</td>
+                                        <td style="padding: 8px; font-weight: bold; text-align: right; border-top: 2px solid #000; border-bottom: 2px solid #000; font-size: 1.2rem;" id="print_net_amount">฿0.00</td>
+                                    </tr>
                                 </table>
                             </div>
-                            <button type="button" class="btn-outline small" onclick="addNewRow()" style="margin-top:0.5rem;">➕ เพิ่มรายการ</button>
-
-                            <hr style="margin: 2rem 0;">
-
-                            <div class="form-row">
-                                <div class="attachment-section" style="flex:1.2;">
-                                    <h4>📎 เอกสารแนบ</h4>
-                                    <input type="file" id="file_upload" multiple accept="image/*,.pdf" style="display:none;">
-                                    <button type="button" class="btn-outline small" onclick="document.getElementById('file_upload').click()">เลือกไฟล์</button>
-                                    <div id="thumbnail_grid" class="thumbnail-grid" style="display:flex; gap:10px; margin-top:1rem;"></div>
-                                </div>
-                                <div class="summary-box" style="flex:1;">
-                                    <div style="display:flex; justify-content:space-between;"><span>รวมเงิน</span><span id="summary_base">฿0.00</span></div>
-                                    <div style="display:flex; justify-content:space-between; color:#ef4444;"><span>ส่วนลด</span><span id="summary_discount">-฿0.00</span></div>
-                                    <div style="display:flex; justify-content:space-between;"><span>หลังส่วนลด</span><span id="summary_after_discount">฿0.00</span></div>
-                                    <div style="display:flex; justify-content:space-between;"><span>VAT 7%</span><span id="summary_vat">฿0.00</span></div>
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <span>ภาษีหัก ณ ที่จ่าย</span>
-                                        <select id="global_wht_rate" style="width:auto; padding:0.2rem;">
-                                            <option value="0">0%</option><option value="1">1%</option><option value="3" selected>3%</option><option value="5">5%</option>
-                                        </select>
-                                        <span id="summary_wht">-฿0.00</span>
-                                    </div>
-                                    <hr style="margin:0.5rem 0;">
-                                    <div style="display:flex; justify-content:space-between; font-size:1.3rem;"><strong>ยอดสุทธิ</strong><strong id="net_amount_display" style="color:#10b981;">฿0.00</strong></div>
-                                </div>
-                            </div>
-
-                            <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
-                                <button type="button" class="btn-outline" id="cancel_btn">ยกเลิก</button>
-                                <button type="submit" class="btn-primary" style="width:auto; padding:0.8rem 2.5rem;">บันทึกเอกสาร</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Company Settings -->
-                <div id="view-company-settings" class="page-view" style="display: none;">
-                    <h2>🏢 ข้อมูลบริษัท</h2>
-                    <div class="glass-panel form-container" style="max-width:700px;">
-                        <form id="company-form">
-                            <div style="text-align:center;">
-                                <img id="company_logo_preview" src="https://via.placeholder.com/150" style="width:130px; height:130px; border-radius:20px; object-fit:contain; border:1px solid #ddd;">
-                                <input type="file" id="company_logo_upload" accept="image/*" style="display:none;">
-                                <div><button type="button" class="btn-outline small" onclick="document.getElementById('company_logo_upload').click()">เปลี่ยนโลโก้</button></div>
-                            </div>
-                            <div class="input-group"><label>ชื่อบริษัท</label><input type="text" id="comp_name" required></div>
-                            <div class="input-group"><label>เลขผู้เสียภาษี</label><input type="text" id="comp_tax_id"></div>
-                            <div class="input-group"><label>ที่อยู่</label><textarea id="comp_address" rows="3"></textarea></div>
-                            <div class="input-group"><label>โทรศัพท์</label><input type="text" id="comp_phone"></div>
-                            <button type="submit" class="btn-primary">บันทึก</button>
-                        </form>
-                    </div>
-                </div>
+                
             </div>
+
         </main>
+
     </div>
 
-    
+    <script type="module" src="supabaseClient.js"></script>
+
+    <script type="module" src="app.js"></script>
+
 </body>
+
 </html>
