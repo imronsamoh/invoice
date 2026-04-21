@@ -236,6 +236,14 @@
                                     <option value="paid">ชำระแล้ว</option>
                                 </select>
                             </div>
+                            <div class="field">
+                                <label>ประเภทภาษี (VAT)</label>
+                                <select id="pv-vat-type" onchange="window.renderPvTable()">
+                                    <option value="none">ไม่มี VAT</option>
+                                    <option value="exclude" selected>VAT นอก (+7%)</option>
+                                    <option value="include">VAT ใน (รวม 7% แล้ว)</option>
+                                </select>
+                            </div>
                             <div class="field field-full"><label>รายละเอียด / หมายเหตุ</label><input type="text" id="pv-remarks" placeholder="ค่าสินค้า, ค่าบริการ..."></div>
                         </div>
                     </div>
@@ -298,17 +306,39 @@
             <div id="page-create-rc" class="page">
                 <div class="sec-head"><div><div class="sec-title">สร้างหนังสือรับรองแทนใบเสร็จฯ (RC)</div></div></div>
                 <form id="rc-form">
-                    <div class="form-card">
-                        <div class="form-grid-2">
-                            <div class="field"><label>วันที่</label><input type="date" id="rc-date" required></div>
-                            <div class="field"><label>ชื่อผู้รับเงิน (ข้าพเจ้า)</label><input type="text" id="rc-name" required></div>
-                            <div class="field"><label>เลขบัตรประชาชน (13 หลัก)</label><input type="text" id="rc-citizen" maxlength="13" required></div>
-                            <div class="field"><label>จำนวนเงิน (บาท)</label><input type="number" id="rc-amount" step="0.01" required></div>
-                            <div class="field field-full"><label>ที่อยู่ผู้รับเงิน</label><input type="text" id="rc-address" required></div>
-                            <div class="field field-full"><label>รายละเอียดการจ่าย (เพื่อจ่ายค่า...)</label><input type="text" id="rc-desc" required></div>
+                    <div style="display:flex; gap:14px; flex-wrap:wrap;">
+                        <div class="form-card" style="flex:2; min-width:350px;">
+                            <div class="form-grid-2">
+                                <div class="field"><label>วันที่</label><input type="date" id="rc-date" required></div>
+                                <div class="field"><label>ชื่อผู้รับเงิน (ข้าพเจ้า)</label><input type="text" id="rc-name" required></div>
+                                <div class="field"><label>เลขบัตรประชาชน (13 หลัก)</label><input type="text" id="rc-citizen" maxlength="13" required></div>
+                                <div class="field"><label>รายละเอียดการจ่าย</label><input type="text" id="rc-desc" required></div>
+                                <div class="field field-full"><label>ที่อยู่ผู้รับเงิน</label><input type="text" id="rc-address" required></div>
+                                
+                                <div class="field"><label>จำนวนเงิน (บาท)</label><input type="number" id="rc-amount" step="0.01" required oninput="window.calcSimpleDoc('rc')"></div>
+                                <div class="field">
+                                    <label>ประเภทภาษี (VAT)</label>
+                                    <select id="rc-vat-type" onchange="window.calcSimpleDoc('rc')">
+                                        <option value="none" selected>ไม่มี VAT</option>
+                                        <option value="exclude">VAT นอก (+7%)</option>
+                                        <option value="include">VAT ใน (รวม 7% แล้ว)</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div style="text-align:right; margin-top:20px;">
-                            <button type="submit" class="btn btn-primary" id="rc-submit-btn"><i class="fa-solid fa-floppy-disk"></i> บันทึกหนังสือรับรองฯ</button>
+                        <div class="summary-panel" style="flex:1; min-width:280px; height:fit-content;">
+                            <div class="sum-row"><span class="sum-label">มูลค่าบริการ</span><span class="sum-val" id="rc-sum-base">฿0.00</span></div>
+                            <div class="sum-row"><span class="sum-label">VAT 7%</span><span class="sum-val" id="rc-sum-vat">฿0.00</span></div>
+                            <div class="sum-row">
+                                <span class="sum-label">หัก ณ ที่จ่าย 
+                                    <select id="rc-wht-rate" style="margin-left:5px; border-radius:4px; border:1px solid var(--border);" onchange="window.calcSimpleDoc('rc')">
+                                        <option value="0" selected>0%</option><option value="1">1%</option><option value="3">3%</option><option value="5">5%</option>
+                                    </select>
+                                </span>
+                                <span class="sum-val" style="color:var(--danger)" id="rc-sum-wht">-฿0.00</span>
+                            </div>
+                            <div class="sum-row total"><span class="sum-label">ยอดสุทธิ (Net)</span><span class="sum-val" id="rc-sum-net">฿0.00</span></div>
+                            <button type="submit" class="btn btn-primary" id="rc-submit-btn" style="width:100%; justify-content:center; margin-top:15px;"><i class="fa-solid fa-floppy-disk"></i> บันทึกเอกสาร</button>
                         </div>
                     </div>
                 </form>
@@ -317,17 +347,39 @@
             <div id="page-create-pr" class="page">
                 <div class="sec-head"><div><div class="sec-title">สร้างใบเบิกจ่าย (PR)</div></div></div>
                 <form id="pr-form">
-                    <div class="form-card">
-                        <div class="form-grid-2">
-                            <div class="field"><label>วันที่ขอเบิก</label><input type="date" id="pr-date" required></div>
-                            <div class="field"><label>วันที่ต้องการใช้เงิน</label><input type="date" id="pr-due" required></div>
-                            <div class="field"><label>ชื่อผู้ขอเบิก</label><input type="text" id="pr-name" required></div>
-                            <div class="field"><label>แผนก / ฝ่าย</label><input type="text" id="pr-dept" required></div>
-                            <div class="field"><label>จำนวนเงินขอเบิก (บาท)</label><input type="number" id="pr-amount" step="0.01" required></div>
-                            <div class="field field-full"><label>วัตถุประสงค์</label><input type="text" id="pr-desc" required></div>
+                    <div style="display:flex; gap:14px; flex-wrap:wrap;">
+                        <div class="form-card" style="flex:2; min-width:350px;">
+                            <div class="form-grid-2">
+                                <div class="field"><label>วันที่ขอเบิก</label><input type="date" id="pr-date" required></div>
+                                <div class="field"><label>วันที่ต้องการใช้เงิน</label><input type="date" id="pr-due" required></div>
+                                <div class="field"><label>ชื่อผู้ขอเบิก</label><input type="text" id="pr-name" required></div>
+                                <div class="field"><label>แผนก / ฝ่าย</label><input type="text" id="pr-dept" required></div>
+                                <div class="field field-full"><label>วัตถุประสงค์การเบิก</label><input type="text" id="pr-desc" required></div>
+                                
+                                <div class="field"><label>จำนวนเงินขอเบิก (บาท)</label><input type="number" id="pr-amount" step="0.01" required oninput="window.calcSimpleDoc('pr')"></div>
+                                <div class="field">
+                                    <label>ประเภทภาษี (VAT)</label>
+                                    <select id="pr-vat-type" onchange="window.calcSimpleDoc('pr')">
+                                        <option value="none" selected>ไม่มี VAT</option>
+                                        <option value="exclude">VAT นอก (+7%)</option>
+                                        <option value="include">VAT ใน (รวม 7% แล้ว)</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div style="text-align:right; margin-top:20px;">
-                            <button type="submit" class="btn btn-primary" id="pr-submit-btn"><i class="fa-solid fa-floppy-disk"></i> บันทึกใบเบิกจ่าย</button>
+                        <div class="summary-panel" style="flex:1; min-width:280px; height:fit-content;">
+                            <div class="sum-row"><span class="sum-label">มูลค่ารายการ</span><span class="sum-val" id="pr-sum-base">฿0.00</span></div>
+                            <div class="sum-row"><span class="sum-label">VAT 7%</span><span class="sum-val" id="pr-sum-vat">฿0.00</span></div>
+                            <div class="sum-row">
+                                <span class="sum-label">หัก ณ ที่จ่าย 
+                                    <select id="pr-wht-rate" style="margin-left:5px; border-radius:4px; border:1px solid var(--border);" onchange="window.calcSimpleDoc('pr')">
+                                        <option value="0" selected>0%</option><option value="1">1%</option><option value="3">3%</option><option value="5">5%</option>
+                                    </select>
+                                </span>
+                                <span class="sum-val" style="color:var(--danger)" id="pr-sum-wht">-฿0.00</span>
+                            </div>
+                            <div class="sum-row total"><span class="sum-label">ยอดสุทธิ (Net)</span><span class="sum-val" id="pr-sum-net">฿0.00</span></div>
+                            <button type="submit" class="btn btn-primary" id="pr-submit-btn" style="width:100%; justify-content:center; margin-top:15px;"><i class="fa-solid fa-floppy-disk"></i> บันทึกเอกสาร</button>
                         </div>
                     </div>
                 </form>
