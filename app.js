@@ -217,7 +217,7 @@ document.getElementById('saveVendorBtn').addEventListener('click', async () => {
 });
 
 // ==========================================
-// 5. ระบบ PV (Dynamic Table & Drag/Drop)
+// 5. ระบบคำนวณและบันทึก PV (Dynamic Table)
 // ==========================================
 let pvItems = [];
 window.addPvRow = () => { pvItems.push({ id: Date.now(), desc: '', qty: 1, price: 0, disc: 0, is_vat: false, is_wht: true }); window.renderPvTable(); };
@@ -231,13 +231,30 @@ window.removePvRow = (idx) => { pvItems.splice(idx, 1); window.renderPvTable(); 
 window.renderPvTable = () => {
     const tbody = document.getElementById('pv-items-body');
     tbody.innerHTML = '';
-    let totalBase = 0, totalVatBase = 0, totalWhtBase = 0;
+    
+    let sumBase = 0, sumVat = 0, sumWhtBase = 0;
+    const vatType = document.getElementById('pv-vat-type').value;
 
     pvItems.forEach((item, i) => {
-        const lineTotal = (item.qty * item.price) - item.disc;
-        totalBase += lineTotal;
-        if(item.is_vat) totalVatBase += lineTotal;
-        if(item.is_wht) totalWhtBase += lineTotal;
+        const lineInputTotal = (item.qty * item.price) - item.disc;
+        let lineBase = lineInputTotal;
+        let lineVat = 0;
+
+        // คำนวณ VAT ใน/นอก เป็นรายบรรทัด
+        if (item.is_vat) {
+            if (vatType === 'exclude') {
+                lineVat = lineBase * 0.07;
+            } else if (vatType === 'include') {
+                lineBase = lineInputTotal / 1.07;
+                lineVat = lineInputTotal - lineBase;
+            }
+        }
+
+        // หัก ณ ที่จ่าย คิดจากยอดก่อน VAT เสมอ
+        if (item.is_wht) sumWhtBase += lineBase;
+
+        sumBase += lineBase;
+        sumVat += lineVat;
 
         tbody.innerHTML += `
             <tr>
@@ -247,40 +264,35 @@ window.renderPvTable = () => {
                 <td><input type="number" value="${item.disc}" style="text-align:right;" onchange="updatePvItem(${i}, 'disc', this)"></td>
                 <td style="text-align:center;"><input type="checkbox" ${item.is_vat ? 'checked':''} onchange="updatePvItem(${i}, 'is_vat', this)"></td>
                 <td style="text-align:center;"><input type="checkbox" ${item.is_wht ? 'checked':''} onchange="updatePvItem(${i}, 'is_wht', this)"></td>
-                <td style="text-align:right; font-weight:600;">${formatTHB(lineTotal)}</td>
+                <td style="text-align:right; font-weight:600;">${formatTHB(lineInputTotal)}</td>
                 <td><button type="button" class="del-btn" onclick="removePvRow(${i})"><i class="fa-solid fa-xmark"></i></button></td>
             </tr>
         `;
     });
 
-    const vatAmt = totalVatBase * 0.07;
     const whtRate = parseFloat(document.getElementById('pv-wht-rate').value) || 0;
-    const whtAmt = totalWhtBase * (whtRate / 100);
+    const sumWht = sumWhtBase * (whtRate / 100);
+    const netTotal = sumBase + sumVat - sumWht;
     
-    document.getElementById('pv-sum-base').textContent = formatTHB(totalBase);
-    document.getElementById('pv-sum-vat').textContent = formatTHB(vatAmt);
-    document.getElementById('pv-sum-wht').textContent = '-' + formatTHB(whtAmt);
-    document.getElementById('pv-sum-net').textContent = formatTHB(totalBase + vatAmt - whtAmt);
+    document.getElementById('pv-sum-base').textContent = formatTHB(sumBase);
+    document.getElementById('pv-sum-vat').textContent = formatTHB(sumVat);
+    document.getElementById('pv-sum-wht').textContent = '-' + formatTHB(sumWht);
+    document.getElementById('pv-sum-net').textContent = formatTHB(netTotal);
 };
 window.addPvRow(); 
 
-// Drag & Drop Zone
+// จัดการการอัปโหลดไฟล์ PV
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('pv-file');
 const thumbGrid = document.getElementById('thumbGrid');
-
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = 'var(--accent-surface)'; });
 dropZone.addEventListener('dragleave', () => { dropZone.style.background = ''; });
 dropZone.addEventListener('drop', (e) => {
     e.preventDefault(); dropZone.style.background = '';
-    if(e.dataTransfer.files.length) {
-        fileInput.files = e.dataTransfer.files;
-        handleFileSelect(fileInput.files);
-    }
+    if(e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; handleFileSelect(fileInput.files); }
 });
 fileInput.addEventListener('change', (e) => handleFileSelect(e.target.files));
-
 function handleFileSelect(files) {
     thumbGrid.innerHTML = '';
     if(files.length > 0) {
@@ -294,7 +306,7 @@ function handleFileSelect(files) {
     }
 }
 
-// Save PV
+// บันทึก PV
 document.getElementById('pv-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     if(pvItems.length === 0) return window.showAlert('warn', 'ข้อมูลไม่ครบ', 'กรุณาเพิ่มรายการอย่างน้อย 1 รายการ');
@@ -341,14 +353,41 @@ document.getElementById('pv-form').addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// 6. บันทึก RC และ PR
+// 6. ระบบคำนวณและบันทึก RC และ PR
 // ==========================================
+// ฟังก์ชันคำนวณ VAT สรุปยอดอัตโนมัติ สำหรับ RC และ PR
+window.calcSimpleDoc = (prefix) => {
+    const amt = parseFloat(document.getElementById(`${prefix}-amount`).value) || 0;
+    const vatType = document.getElementById(`${prefix}-vat-type`).value;
+    const whtRate = parseFloat(document.getElementById(`${prefix}-wht-rate`).value) || 0;
+
+    let base = amt;
+    let vat = 0;
+
+    if (vatType === 'exclude') {
+        vat = base * 0.07;
+    } else if (vatType === 'include') {
+        base = amt / 1.07;
+        vat = amt - base;
+    }
+
+    const wht = base * (whtRate / 100);
+    const net = base + vat - wht;
+
+    document.getElementById(`${prefix}-sum-base`).textContent = formatTHB(base);
+    document.getElementById(`${prefix}-sum-vat`).textContent = formatTHB(vat);
+    document.getElementById(`${prefix}-sum-wht`).textContent = '-' + formatTHB(wht);
+    document.getElementById(`${prefix}-sum-net`).textContent = formatTHB(net);
+};
+
+// บันทึกเอกสารทั่วไป
 const saveSimpleDoc = async (type, formId, payloadFn) => {
     document.getElementById(formId).addEventListener('submit', async (e) => {
         e.preventDefault();
         const { data: { user } } = await supabase.auth.getUser();
         const btn = document.querySelector(`#${formId} button[type="submit"]`);
-        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'กำลังบันทึก...'; btn.disabled = true;
         
         try {
             const { docPayload, itemPayload } = payloadFn(user.id);
@@ -360,35 +399,40 @@ const saveSimpleDoc = async (type, formId, payloadFn) => {
 
             window.showAlert('success', 'สำเร็จ', 'บันทึกเอกสารเรียบร้อย');
             document.getElementById(formId).reset();
+            window.calcSimpleDoc(type); // รีเซ็ตตัวเลข
             document.querySelector('[data-page="docs"]').click();
         } catch(err) { window.showAlert('danger', 'Error', err.message); }
-        finally { btn.disabled = false; }
+        finally { btn.innerHTML = originalText; btn.disabled = false; }
     });
 };
 
 saveSimpleDoc('rc', 'rc-form', (uid) => {
-    const amt = parseFloat(document.getElementById('rc-amount').value);
+    const parseCurrency = (id) => parseFloat(document.getElementById(id).textContent.replace(/[^0-9.-]+/g,"")) || 0;
     return {
         docPayload: {
             doc_no: `RC${Date.now().toString().slice(-6)}`, doc_type: 'receipt_certificate', doc_date: document.getElementById('rc-date').value,
             vendor_name: document.getElementById('rc-name').value, status: 'paid',
-            remarks: `บัตร: ${document.getElementById('rc-citizen').value} | ที่อยู่: ${document.getElementById('rc-address').value}`,
-            total_amount_before_vat: amt, net_amount: amt, created_by: uid
+            remarks: `บัตร: ${document.getElementById('rc-citizen').value} | ที่อยู่: ${document.getElementById('rc-address').value} | จ่ายค่า: ${document.getElementById('rc-desc').value}`,
+            total_amount_before_vat: parseCurrency('rc-sum-base'), vat_amount: parseCurrency('rc-sum-vat'), 
+            wht_percent: parseFloat(document.getElementById('rc-wht-rate').value), wht_amount: Math.abs(parseCurrency('rc-sum-wht')),
+            net_amount: parseCurrency('rc-sum-net'), created_by: uid
         },
-        itemPayload: { description: document.getElementById('rc-desc').value, qty: 1, unit_price: amt }
+        itemPayload: { description: document.getElementById('rc-desc').value, qty: 1, unit_price: parseFloat(document.getElementById('rc-amount').value) }
     };
 });
 
 saveSimpleDoc('pr', 'pr-form', (uid) => {
-    const amt = parseFloat(document.getElementById('pr-amount').value);
+    const parseCurrency = (id) => parseFloat(document.getElementById(id).textContent.replace(/[^0-9.-]+/g,"")) || 0;
     return {
         docPayload: {
             doc_no: `PR${Date.now().toString().slice(-6)}`, doc_type: 'payment_requisition', doc_date: document.getElementById('pr-date').value,
             due_date: document.getElementById('pr-due').value, vendor_name: document.getElementById('pr-name').value, status: 'pending',
             remarks: `แผนก: ${document.getElementById('pr-dept').value} | วัตถุประสงค์: ${document.getElementById('pr-desc').value}`,
-            total_amount_before_vat: amt, net_amount: amt, created_by: uid
+            total_amount_before_vat: parseCurrency('pr-sum-base'), vat_amount: parseCurrency('pr-sum-vat'), 
+            wht_percent: parseFloat(document.getElementById('pr-wht-rate').value), wht_amount: Math.abs(parseCurrency('pr-sum-wht')),
+            net_amount: parseCurrency('pr-sum-net'), created_by: uid
         },
-        itemPayload: { description: document.getElementById('pr-desc').value, qty: 1, unit_price: amt }
+        itemPayload: { description: document.getElementById('pr-desc').value, qty: 1, unit_price: parseFloat(document.getElementById('pr-amount').value) }
     };
 });
 
