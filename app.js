@@ -449,7 +449,7 @@ async function loadDocuments() {
             <td style="text-align: right; font-weight: bold; color: #10b981;">฿${parseFloat(doc.net_amount).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
             <td style="text-align: center;">${statusBadge}</td>
             <td style="text-align: center;">
-                <button class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.85rem;" onclick="alert('ฟังก์ชันดู/แก้ไข กำลังมาใน Part หน้าครับ!')">ดู/แก้ไข</button>
+                <button class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.85rem;" onclick="printDocument('${doc.id}')">🖨️ พิมพ์เอกสาร</button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -471,3 +471,76 @@ document.querySelector('[data-page="dashboard"]').addEventListener('click', load
 
 // สั่งโหลดข้อมูลทันทีเมื่อเปิดแอปขึ้นมาครั้งแรก
 loadDocuments();
+// ==========================================
+// ส่วนที่ 10: ระบบสร้างเอกสาร PDF (Print View)
+// ==========================================
+
+// ทำให้ HTML รู้จักฟังก์ชันนี้เมื่อกดปุ่ม "พิมพ์เอกสาร"
+window.printDocument = async (documentId) => {
+    try {
+        // 1. ดึงข้อมูลหัวเอกสาร (PV)
+        const { data: docData, error: docErr } = await supabase.from('documents').select('*').eq('id', documentId).single();
+        if (docErr) throw docErr;
+
+        // 2. ดึงข้อมูลรายการย่อยทั้งหมดของเอกสารนี้
+        const { data: itemsData, error: itemsErr } = await supabase.from('document_items').select('*').eq('document_id', documentId);
+        if (itemsErr) throw itemsErr;
+
+        // 3. ดึงข้อมูลบริษัท
+        const { data: compData } = await supabase.from('company_settings').select('*').eq('id', 1).single();
+
+        // --- นำข้อมูลยัดใส่หน้ากระดาษ A4 ---
+        
+        // ข้อมูลบริษัท
+        if (compData) {
+            document.getElementById('print_comp_name').textContent = compData.company_name || 'ชื่อบริษัท';
+            document.getElementById('print_comp_address').textContent = compData.address || '-';
+            document.getElementById('print_comp_tax').textContent = compData.tax_id || '-';
+            document.getElementById('print_comp_phone').textContent = compData.phone || '-';
+            
+            const logoImg = document.getElementById('print_logo');
+            if (compData.logo_url) {
+                logoImg.src = compData.logo_url;
+                logoImg.style.display = 'block';
+            } else {
+                logoImg.style.display = 'none';
+            }
+        }
+
+        // ข้อมูลเอกสาร
+        document.getElementById('print_doc_no').textContent = docData.doc_no;
+        document.getElementById('print_doc_date').textContent = docData.doc_date;
+        document.getElementById('print_vendor_name').textContent = docData.vendor_name;
+        document.getElementById('print_remarks').textContent = docData.remarks || '-';
+
+        // วาดตารางรายการสินค้า
+        const tbody = document.getElementById('print_items_body');
+        tbody.innerHTML = '';
+        itemsData.forEach(item => {
+            const tr = document.createElement('tr');
+            const itemTotal = (item.qty * item.unit_price) - item.item_discount;
+            tr.innerHTML = `
+                <td style="border: 1px solid #000; padding: 8px;">${item.description}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item.qty}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: right;">${item.unit_price.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: right;">${item.item_discount > 0 ? item.item_discount.toLocaleString('th-TH', {minimumFractionDigits: 2}) : '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: right;">${itemTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // สรุปยอดเงิน
+        const formatTHB = (num) => `฿${parseFloat(num).toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+        document.getElementById('print_total_base').textContent = formatTHB(docData.total_amount_before_vat);
+        document.getElementById('print_total_vat').textContent = formatTHB(docData.vat_amount);
+        document.getElementById('print_total_wht').textContent = `-${formatTHB(docData.wht_amount)}`;
+        document.getElementById('print_net_amount').textContent = formatTHB(docData.net_amount);
+
+        // --- สลับหน้าจอไปที่หน้า Print View ---
+        document.querySelectorAll('.page-view').forEach(page => page.style.display = 'none');
+        document.getElementById('view-print').style.display = 'block';
+
+    } catch (error) {
+        alert("เกิดข้อผิดพลาดในการดึงข้อมูลเพื่อพิมพ์: " + error.message);
+    }
+};
