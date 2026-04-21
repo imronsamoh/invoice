@@ -65,7 +65,40 @@
                         </div>
                     </div>
                 </div>
+<div class="document-header">
+    <div class="status-badge draft" id="doc_status_badge">สถานะ: ร่าง (Draft)</div>
+    <select id="doc_status_select" class="status-dropdown">
+        <option value="draft">ร่าง (Draft)</option>
+        <option value="pending">รออนุมัติ (Pending)</option>
+        <option value="approved">อนุมัติแล้ว (Approved)</option>
+        <option value="paid">ชำระเงินแล้ว (Paid)</option>
+    </select>
+</div>
 
+<table class="item-table" id="items_table">
+    <thead>
+        <tr>
+            <th>รายละเอียด</th>
+            <th width="10%">จำนวน</th>
+            <th width="15%">ราคา/หน่วย</th>
+            <th width="10%">ส่วนลด</th>
+            <th width="8%">คิด VAT</th>
+            <th width="8%">คิด WHT</th>
+            <th width="15%">รวม</th>
+            <th width="5%"></th> </tr>
+    </thead>
+    <tbody id="items_body">
+        </tbody>
+</table>
+<button type="button" class="btn-outline" onclick="addNewRow()">+ เพิ่มรายการ</button>
+
+<div class="attachment-section" style="margin-top: 2rem; padding: 1rem; border: 2px dashed var(--border-color);">
+    <h3>แนบเอกสารประกอบ</h3>
+    <input type="file" id="file_upload" multiple accept="image/*,.pdf" style="display: none;">
+    <button type="button" class="btn-outline" onclick="document.getElementById('file_upload').click()">เลือกไฟล์</button>
+    <div id="thumbnail_grid" class="thumbnail-grid" style="display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap;">
+        </div>
+</div>
                 <div id="view-create-pv" class="page-view" style="display: none;">
                     <h2>สร้างใบสำคัญจ่าย (Payment Voucher)</h2>
                     <div class="glass-panel form-container">
