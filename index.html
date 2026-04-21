@@ -51,11 +51,67 @@
             </header>
             
             <div id="page-content" class="content-area">
-                <h2>ยินดีต้อนรับสู่ระบบ</h2>
-                <p>เลือกเมนูด้านซ้ายเพื่อเริ่มต้นทำงาน</p>
+                
+                <div id="view-dashboard" class="page-view">
+                    <h2>ภาพรวมระบบ (Dashboard)</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>เอกสารรออนุมัติ</h3>
+                            <p class="stat-number" id="stat-pending">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>จ่ายแล้ว (เดือนนี้)</h3>
+                            <p class="stat-number" id="stat-paid">฿0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-create-pv" class="page-view" style="display: none;">
+                    <h2>สร้างใบสำคัญจ่าย (Payment Voucher)</h2>
+                    <div class="glass-panel form-container">
+                        <form id="pv-form">
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>วันที่เอกสาร</label>
+                                    <input type="date" id="doc_date" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>ชื่อผู้รับเงิน / Vendor</label>
+                                    <input type="text" id="vendor_name" placeholder="บริษัท / นาย..." required>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label>รายละเอียดการจ่าย</label>
+                                <input type="text" id="remarks" placeholder="ค่าสินค้า, ค่าบริการ..." required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>ยอดก่อนภาษี (บาท)</label>
+                                    <input type="number" id="base_amount" step="0.01" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>หัก ณ ที่จ่าย (%)</label>
+                                    <select id="wht_rate">
+                                        <option value="0">ไม่มีหัก ณ ที่จ่าย</option>
+                                        <option value="1">1% (ค่าขนส่ง)</option>
+                                        <option value="3">3% (ค่าบริการ)</option>
+                                        <option value="5">5% (ค่าเช่า)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="summary-box">
+                                <p>ยอดสุทธิที่ต้องจ่าย: <strong id="net_amount_display" style="font-size: 1.5rem; color: #10b981;">฿0.00</strong></p>
+                            </div>
+
+                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกเอกสาร</button>
+                        </form>
+                    </div>
+                </div>
+
             </div>
-        </main>
-    </div>
 
     <script type="module" src="supabaseClient.js"></script>
     <script type="module" src="app.js"></script>
