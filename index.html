@@ -13,26 +13,88 @@
 
 <div class="alerts-container" id="alertsContainer"></div>
 
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">ยืนยันการดำเนินการ</span>
+      <button class="modal-close" onclick="window.closeModal('confirmModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <p class="modal-confirm-title" id="confirmHeading">ลบเอกสาร ?</p>
+      <p class="modal-confirm-msg">เอกสารนี้จะถูกลบออกจากระบบถาวร ไม่สามารถกู้คืนได้ กรุณายืนยัน</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="window.closeModal('confirmModal')">ยกเลิก</button>
+      <button class="btn btn-danger" id="confirmActionBtn"><i class="fa-solid fa-trash"></i> ยืนยันลบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="statusModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <span class="modal-title">เปลี่ยนสถานะเอกสาร</span>
+      <button class="modal-close" onclick="window.closeModal('statusModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px">เลือกสถานะใหม่สำหรับเอกสาร <strong id="statusDocRef"></strong></p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">
+          <input type="radio" name="docStatus" value="draft"> <span class="badge badge-draft"><i class="fa-regular fa-file"></i> ร่าง (Draft)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">
+          <input type="radio" name="docStatus" value="pending"> <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> รออนุมัติ</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">
+          <input type="radio" name="docStatus" value="approved"> <span class="badge badge-approved"><i class="fa-solid fa-circle-check"></i> อนุมัติแล้ว</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">
+          <input type="radio" name="docStatus" value="paid"> <span class="badge badge-paid"><i class="fa-solid fa-money-bill-wave"></i> ชำระแล้ว</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="window.closeModal('statusModal')">ยกเลิก</button>
+      <button class="btn btn-primary" id="saveStatusBtn">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="formModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <span class="modal-title"><i class="fa-solid fa-building" style="color:var(--text-3);margin-right:8px"></i>ข้อมูลคู่ค้า / ผู้รับเงิน</span>
+      <button class="modal-close" onclick="window.closeModal('formModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field" style="grid-column:1/-1"><label>ชื่อ / บริษัท</label><input type="text" id="vm_name" placeholder="นาย / นาง / บริษัท..."></div>
+        <div class="field"><label>เลขประจำตัวผู้เสียภาษี</label><input type="text" id="vm_taxid" placeholder="0000000000000" maxlength="13"></div>
+        <div class="field"><label>เบอร์โทรศัพท์</label><input type="text" id="vm_phone" placeholder="08x-xxx-xxxx"></div>
+        <div class="field" style="grid-column:1/-1"><label>ที่อยู่</label><textarea id="vm_addr" rows="2" placeholder="เลขที่ ถนน ตำบล อำเภอ จังหวัด..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="window.closeModal('formModal')">ยกเลิก</button>
+      <button class="btn btn-primary" id="saveVendorBtn"><i class="fa-solid fa-check"></i> บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <div id="login-section" class="login-wrap">
     <div class="login-box">
         <h2>UM Accounting</h2>
         <p>ระบบจัดการเอกสารบัญชีและการเงิน</p>
         <form id="login-form">
-            <div class="field" style="margin-bottom: 14px;">
-                <label>อีเมล</label>
-                <input type="email" id="login-email" required placeholder="name@company.com">
-            </div>
-            <div class="field" style="margin-bottom: 20px;">
-                <label>รหัสผ่าน</label>
-                <input type="password" id="login-password" required placeholder="••••••••">
-            </div>
+            <div class="field" style="margin-bottom: 14px;"><label>อีเมล</label><input type="email" id="login-email" required placeholder="name@company.com"></div>
+            <div class="field" style="margin-bottom: 20px;"><label>รหัสผ่าน</label><input type="password" id="login-password" required placeholder="••••••••"></div>
             <button type="submit" id="login-btn" class="btn btn-primary" style="width: 100%; justify-content: center;">เข้าสู่ระบบ</button>
         </form>
     </div>
 </div>
 
 <div id="app-section" class="shell" style="display: none;">
-    
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
             <div class="co-name"><i class="fa-solid fa-briefcase" style="margin-right:8px;color:var(--accent)"></i>UM Accounting</div>
@@ -42,12 +104,10 @@
             <div class="nav-section">ภาพรวม</div>
             <button class="nav-item active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i> หน้าหลัก</button>
             <button class="nav-item" data-page="docs"><i class="fa-solid fa-file-lines"></i> รายการเอกสารทั้งหมด</button>
-            
             <div class="nav-section">สร้างเอกสาร</div>
             <button class="nav-item" data-page="create-pv"><i class="fa-solid fa-file-invoice-dollar"></i> ใบสำคัญจ่าย (PV)</button>
             <button class="nav-item" data-page="create-rc"><i class="fa-solid fa-receipt"></i> หนังสือรับรองฯ (RC)</button>
             <button class="nav-item" data-page="create-pr"><i class="fa-solid fa-money-check-dollar"></i> ใบเบิกจ่าย (PR)</button>
-            
             <div class="nav-section">ตั้งค่า</div>
             <button class="nav-item" data-page="company"><i class="fa-solid fa-building"></i> ข้อมูลบริษัท</button>
         </nav>
@@ -72,7 +132,6 @@
         </header>
 
         <div class="content">
-
             <div id="page-dashboard" class="page active">
                 <div class="sec-head">
                     <div>
@@ -81,9 +140,19 @@
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="loadDocuments()"><i class="fa-solid fa-arrows-rotate"></i> รีเฟรช</button>
                 </div>
+                
+                <div class="inline-alert inline-alert-info" id="dashboard-alert">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div class="ia-text">ยินดีต้อนรับสู่ UM Accounting (Mini-ERP) ระบบพร้อมใช้งานแล้ว</div>
+                </div>
+
                 <div class="stats-row">
                     <div class="stat-card">
-                        <div class="stat-label"><i class="fa-solid fa-hourglass-half"></i> เอกสารรออนุมัติ</div>
+                        <div class="stat-label"><i class="fa-solid fa-file-circle-check"></i> เอกสารทั้งหมด</div>
+                        <div class="stat-val" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="fa-solid fa-hourglass-half"></i> รออนุมัติ</div>
                         <div class="stat-val" style="color:var(--warn)" id="stat-pending">0</div>
                     </div>
                     <div class="stat-card">
@@ -100,6 +169,14 @@
                         <div class="sec-sub">รวม PV, RC, PR</div>
                     </div>
                 </div>
+                
+                <div class="tabs">
+                  <div class="tab active" onclick="window.filterTab(this, 'all')">ทั้งหมด</div>
+                  <div class="tab" onclick="window.filterTab(this, 'pending')">รออนุมัติ</div>
+                  <div class="tab" onclick="window.filterTab(this, 'approved')">อนุมัติแล้ว</div>
+                  <div class="tab" onclick="window.filterTab(this, 'paid')">ชำระแล้ว</div>
+                </div>
+
                 <div class="panel">
                     <table>
                         <thead>
@@ -110,7 +187,7 @@
                                 <th>ผู้รับเงิน/ผู้เบิก</th>
                                 <th style="text-align:right">ยอดสุทธิ</th>
                                 <th style="text-align:center">สถานะ</th>
-                                <th></th>
+                                <th style="text-align:center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="doc-list-body">
@@ -122,17 +199,22 @@
 
             <div id="page-create-pv" class="page">
                 <div class="sec-head">
-                    <div>
-                        <div class="sec-title">สร้างใบสำคัญจ่าย (PV)</div>
-                        <div class="sec-sub">Payment Voucher</div>
-                    </div>
+                    <div><div class="sec-title">สร้างใบสำคัญจ่าย (PV)</div><div class="sec-sub">Payment Voucher</div></div>
                 </div>
                 <form id="pv-form">
                     <div class="form-card">
                         <div class="section-label"><i class="fa-solid fa-circle-info"></i> ข้อมูลเอกสาร</div>
                         <div class="form-grid">
                             <div class="field"><label>วันที่</label><input type="date" id="pv-date" required></div>
-                            <div class="field"><label>ชื่อผู้รับเงิน</label><input type="text" id="pv-vendor" required placeholder="บริษัท / นาย..."></div>
+                            <div class="field">
+                                <label>ชื่อผู้รับเงิน / คู่ค้า</label>
+                                <div style="display:flex;gap:6px">
+                                    <input type="text" id="pv-vendor" required placeholder="พิมพ์ หรือ กด +">
+                                    <button type="button" class="btn btn-secondary" style="height:36px;padding:0 10px;flex-shrink:0" onclick="window.openModal('formModal')" title="เพิ่มผู้รับเงิน">
+                                        <i class="fa-solid fa-user-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <div class="field">
                                 <label>สถานะ</label>
                                 <select id="pv-status">
@@ -172,9 +254,15 @@
 
                     <div style="display:flex; gap:14px; flex-wrap:wrap;">
                         <div class="form-card" style="flex:1; min-width:300px;">
-                            <div class="section-label"><i class="fa-solid fa-paperclip"></i> ไฟล์แนบ (สลิป/บิล)</div>
-                            <input type="file" id="pv-file" accept="image/*,.pdf" style="margin-bottom: 10px; width:100%;">
+                            <div class="section-label"><i class="fa-solid fa-paperclip"></i> เอกสารแนบ</div>
+                            <div id="dropZone" style="border:1.5px dashed var(--border-strong); border-radius:var(--r); padding:24px; text-align:center; cursor:pointer; transition:background 0.15s">
+                              <i class="fa-solid fa-cloud-arrow-up" style="font-size:24px; color:var(--text-3); margin-bottom:10px; display:block"></i>
+                              <p style="font-size:13px; color:var(--text-2); font-weight:500">คลิกหรือลากไฟล์สลิปมาวางที่นี่</p>
+                            </div>
+                            <input type="file" id="pv-file" accept="image/*,.pdf" style="display:none;">
+                            <div id="thumbGrid" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap"></div>
                         </div>
+                        
                         <div class="summary-panel">
                             <div class="sum-row"><span class="sum-label">รวมเป็นเงิน</span><span class="sum-val" id="pv-sum-base">฿0.00</span></div>
                             <div class="sum-row"><span class="sum-label">ภาษีมูลค่าเพิ่ม 7%</span><span class="sum-val" id="pv-sum-vat">฿0.00</span></div>
