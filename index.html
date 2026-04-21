@@ -1,631 +1,313 @@
 <!DOCTYPE html>
-
 <html lang="th">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>ระบบจัดทำเอกสารบัญชี (Mini-ERP)</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+    <title>UM Accounting — Mini ERP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 </head>
-
 <body>
 
-    <div id="login-section" class="container glass-panel">
+<div class="alerts-container" id="alertsContainer"></div>
 
-        <div class="login-box">
+<div id="login-section" class="login-wrap">
+    <div class="login-box">
+        <h2>UM Accounting</h2>
+        <p>ระบบจัดการเอกสารบัญชีและการเงิน</p>
+        <form id="login-form">
+            <div class="field" style="margin-bottom: 14px;">
+                <label>อีเมล</label>
+                <input type="email" id="login-email" required placeholder="name@company.com">
+            </div>
+            <div class="field" style="margin-bottom: 20px;">
+                <label>รหัสผ่าน</label>
+                <input type="password" id="login-password" required placeholder="••••••••">
+            </div>
+            <button type="submit" id="login-btn" class="btn btn-primary" style="width: 100%; justify-content: center;">เข้าสู่ระบบ</button>
+        </form>
+    </div>
+</div>
 
-            <h2>เข้าสู่ระบบ</h2>
-
-            <p>ระบบจัดการเอกสารบัญชีและการเงิน</p>
-
-            <form id="login-form">
-
-                <div class="input-group">
-
-                    <label for="email">อีเมล</label>
-
-                    <input type="email" id="email" required placeholder="name@company.com">
-
+<div id="app-section" class="shell" style="display: none;">
+    
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="co-name"><i class="fa-solid fa-briefcase" style="margin-right:8px;color:var(--accent)"></i>UM Accounting</div>
+            <div class="co-sub" id="sidebar-company-name">กำลังโหลด...</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">ภาพรวม</div>
+            <button class="nav-item active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i> หน้าหลัก</button>
+            <button class="nav-item" data-page="docs"><i class="fa-solid fa-file-lines"></i> รายการเอกสารทั้งหมด</button>
+            
+            <div class="nav-section">สร้างเอกสาร</div>
+            <button class="nav-item" data-page="create-pv"><i class="fa-solid fa-file-invoice-dollar"></i> ใบสำคัญจ่าย (PV)</button>
+            <button class="nav-item" data-page="create-rc"><i class="fa-solid fa-receipt"></i> หนังสือรับรองฯ (RC)</button>
+            <button class="nav-item" data-page="create-pr"><i class="fa-solid fa-money-check-dollar"></i> ใบเบิกจ่าย (PR)</button>
+            
+            <div class="nav-section">ตั้งค่า</div>
+            <button class="nav-item" data-page="company"><i class="fa-solid fa-building"></i> ข้อมูลบริษัท</button>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-block">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <div>
+                    <div class="user-name" id="user-email-display">user@email.com</div>
+                    <button id="logout-btn" style="background:none; border:none; color:var(--danger); font-size:11px; cursor:pointer; margin-top:2px;">ออกจากระบบ</button>
                 </div>
+            </div>
+        </div>
+    </aside>
 
-                <div class="input-group">
+    <div class="main">
+        <header class="topbar">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <button class="mobile-toggle" id="menu-toggle"><i class="fa-solid fa-bars"></i></button>
+                <span class="breadcrumb" id="breadcrumb">หน้าหลัก</span>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="document.querySelector('[data-page=\'create-pv\']').click()"><i class="fa-solid fa-plus"></i> สร้าง PV</button>
+        </header>
 
-                    <label for="password">รหัสผ่าน</label>
+        <div class="content">
 
-                    <input type="password" id="password" required placeholder="••••••••">
-
+            <div id="page-dashboard" class="page active">
+                <div class="sec-head">
+                    <div>
+                        <div class="sec-title">ภาพรวมระบบ (Dashboard)</div>
+                        <div class="sec-sub">ข้อมูลอัปเดตล่าสุด</div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="loadDocuments()"><i class="fa-solid fa-arrows-rotate"></i> รีเฟรช</button>
                 </div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="fa-solid fa-hourglass-half"></i> เอกสารรออนุมัติ</div>
+                        <div class="stat-val" style="color:var(--warn)" id="stat-pending">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="fa-solid fa-money-bill-wave"></i> ยอดชำระแล้ว</div>
+                        <div class="stat-val" style="color:var(--success)" id="stat-paid">฿0.00</div>
+                    </div>
+                </div>
+            </div>
 
-                <button type="submit" id="login-btn" class="btn-primary">เข้าสู่ระบบ</button>
+            <div id="page-docs" class="page">
+                <div class="sec-head">
+                    <div>
+                        <div class="sec-title">รายการเอกสารทั้งหมด</div>
+                        <div class="sec-sub">รวม PV, RC, PR</div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ประเภท</th>
+                                <th>เลขที่เอกสาร</th>
+                                <th>วันที่</th>
+                                <th>ผู้รับเงิน/ผู้เบิก</th>
+                                <th style="text-align:right">ยอดสุทธิ</th>
+                                <th style="text-align:center">สถานะ</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="doc-list-body">
+                            <tr><td colspan="7" style="text-align:center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-            </form>
+            <div id="page-create-pv" class="page">
+                <div class="sec-head">
+                    <div>
+                        <div class="sec-title">สร้างใบสำคัญจ่าย (PV)</div>
+                        <div class="sec-sub">Payment Voucher</div>
+                    </div>
+                </div>
+                <form id="pv-form">
+                    <div class="form-card">
+                        <div class="section-label"><i class="fa-solid fa-circle-info"></i> ข้อมูลเอกสาร</div>
+                        <div class="form-grid">
+                            <div class="field"><label>วันที่</label><input type="date" id="pv-date" required></div>
+                            <div class="field"><label>ชื่อผู้รับเงิน</label><input type="text" id="pv-vendor" required placeholder="บริษัท / นาย..."></div>
+                            <div class="field">
+                                <label>สถานะ</label>
+                                <select id="pv-status">
+                                    <option value="draft">ร่าง (Draft)</option>
+                                    <option value="pending">รออนุมัติ</option>
+                                    <option value="approved">อนุมัติแล้ว</option>
+                                    <option value="paid">ชำระแล้ว</option>
+                                </select>
+                            </div>
+                            <div class="field field-full"><label>รายละเอียด / หมายเหตุ</label><input type="text" id="pv-remarks" placeholder="ค่าสินค้า, ค่าบริการ..."></div>
+                        </div>
+                    </div>
 
-            <p id="login-error" class="error-text" style="display: none;"></p>
+                    <div class="form-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
+                            <div class="section-label" style="margin:0;"><i class="fa-solid fa-list-check"></i> รายการ</div>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="window.addPvRow()"><i class="fa-solid fa-plus"></i> เพิ่มแถว</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>รายละเอียด</th>
+                                        <th width="80">จำนวน</th>
+                                        <th width="110">ราคา/หน่วย</th>
+                                        <th width="90">ส่วนลด</th>
+                                        <th width="50" style="text-align:center">VAT</th>
+                                        <th width="50" style="text-align:center">WHT</th>
+                                        <th width="120" style="text-align:right">รวม</th>
+                                        <th width="40"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pv-items-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:14px; flex-wrap:wrap;">
+                        <div class="form-card" style="flex:1; min-width:300px;">
+                            <div class="section-label"><i class="fa-solid fa-paperclip"></i> ไฟล์แนบ (สลิป/บิล)</div>
+                            <input type="file" id="pv-file" accept="image/*,.pdf" style="margin-bottom: 10px; width:100%;">
+                        </div>
+                        <div class="summary-panel">
+                            <div class="sum-row"><span class="sum-label">รวมเป็นเงิน</span><span class="sum-val" id="pv-sum-base">฿0.00</span></div>
+                            <div class="sum-row"><span class="sum-label">ภาษีมูลค่าเพิ่ม 7%</span><span class="sum-val" id="pv-sum-vat">฿0.00</span></div>
+                            <div class="sum-row">
+                                <span class="sum-label">หัก ณ ที่จ่าย 
+                                    <select id="pv-wht-rate" style="margin-left:5px; border-radius:4px; border:1px solid var(--border);" onchange="window.renderPvTable()">
+                                        <option value="0">0%</option><option value="1">1%</option><option value="3" selected>3%</option><option value="5">5%</option>
+                                    </select>
+                                </span>
+                                <span class="sum-val" style="color:var(--danger)" id="pv-sum-wht">-฿0.00</span>
+                            </div>
+                            <div class="sum-row total"><span class="sum-label">ยอดสุทธิ (Net)</span><span class="sum-val" id="pv-sum-net">฿0.00</span></div>
+                        </div>
+                    </div>
+                    <div style="text-align:right; margin-top:20px;">
+                        <button type="submit" class="btn btn-primary" id="pv-submit-btn"><i class="fa-solid fa-floppy-disk"></i> บันทึกใบสำคัญจ่าย</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="page-create-rc" class="page">
+                <div class="sec-head"><div><div class="sec-title">สร้างหนังสือรับรองแทนใบเสร็จฯ (RC)</div></div></div>
+                <form id="rc-form">
+                    <div class="form-card">
+                        <div class="form-grid-2">
+                            <div class="field"><label>วันที่</label><input type="date" id="rc-date" required></div>
+                            <div class="field"><label>ชื่อผู้รับเงิน (ข้าพเจ้า)</label><input type="text" id="rc-name" required></div>
+                            <div class="field"><label>เลขบัตรประชาชน (13 หลัก)</label><input type="text" id="rc-citizen" maxlength="13" required></div>
+                            <div class="field"><label>จำนวนเงิน (บาท)</label><input type="number" id="rc-amount" step="0.01" required></div>
+                            <div class="field field-full"><label>ที่อยู่ผู้รับเงิน</label><input type="text" id="rc-address" required></div>
+                            <div class="field field-full"><label>รายละเอียดการจ่าย (เพื่อจ่ายค่า...)</label><input type="text" id="rc-desc" required></div>
+                        </div>
+                        <div style="text-align:right; margin-top:20px;">
+                            <button type="submit" class="btn btn-primary" id="rc-submit-btn"><i class="fa-solid fa-floppy-disk"></i> บันทึกหนังสือรับรองฯ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="page-create-pr" class="page">
+                <div class="sec-head"><div><div class="sec-title">สร้างใบเบิกจ่าย (PR)</div></div></div>
+                <form id="pr-form">
+                    <div class="form-card">
+                        <div class="form-grid-2">
+                            <div class="field"><label>วันที่ขอเบิก</label><input type="date" id="pr-date" required></div>
+                            <div class="field"><label>วันที่ต้องการใช้เงิน</label><input type="date" id="pr-due" required></div>
+                            <div class="field"><label>ชื่อผู้ขอเบิก</label><input type="text" id="pr-name" required></div>
+                            <div class="field"><label>แผนก / ฝ่าย</label><input type="text" id="pr-dept" required></div>
+                            <div class="field"><label>จำนวนเงินขอเบิก (บาท)</label><input type="number" id="pr-amount" step="0.01" required></div>
+                            <div class="field field-full"><label>วัตถุประสงค์</label><input type="text" id="pr-desc" required></div>
+                        </div>
+                        <div style="text-align:right; margin-top:20px;">
+                            <button type="submit" class="btn btn-primary" id="pr-submit-btn"><i class="fa-solid fa-floppy-disk"></i> บันทึกใบเบิกจ่าย</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="page-company" class="page">
+                <div class="sec-head"><div><div class="sec-title">ข้อมูลบริษัท</div></div></div>
+                <form id="company-form">
+                    <div class="form-card">
+                        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                            <div style="text-align:center;">
+                                <img id="comp-logo-preview" src="" style="width:100px; height:100px; object-fit:contain; border:1px solid var(--border); border-radius:var(--r); display:none; margin-bottom:10px;">
+                                <input type="file" id="comp-logo-file" accept="image/*" style="width: 100%;">
+                            </div>
+                            <div class="form-grid-2" style="flex:1;">
+                                <div class="field field-full"><label>ชื่อบริษัท / กิจการ</label><input type="text" id="comp-name" required></div>
+                                <div class="field"><label>เลขประจำตัวผู้เสียภาษี</label><input type="text" id="comp-tax"></div>
+                                <div class="field"><label>เบอร์โทรศัพท์</label><input type="text" id="comp-phone"></div>
+                                <div class="field field-full"><label>ที่อยู่สำนักงาน</label><textarea id="comp-address" rows="3" required></textarea></div>
+                            </div>
+                        </div>
+                        <div style="text-align:right; margin-top:20px;">
+                            <button type="submit" class="btn btn-primary" id="comp-submit-btn"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="page-print" class="page">
+                <div class="no-print" style="margin-bottom: 20px; display:flex; justify-content:space-between;">
+                    <button class="btn btn-secondary" onclick="document.querySelector('[data-page=\'docs\']').click()"><i class="fa-solid fa-arrow-left"></i> กลับ</button>
+                    <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> สั่งพิมพ์ PDF</button>
+                </div>
+                <div class="a4-paper">
+                    <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;">
+                        <div style="display:flex; gap:15px; align-items:center;">
+                            <img id="print-logo" src="" style="max-height:80px; max-width:150px; display:none;">
+                            <div>
+                                <h2 id="print-comp-name" style="margin:0; font-size:20px;">ชื่อบริษัท</h2>
+                                <p id="print-comp-address" style="margin:0; font-size:13px;"></p>
+                                <p style="margin:0; font-size:13px;">เลขผู้เสียภาษี: <span id="print-comp-tax"></span> | โทร: <span id="print-comp-phone"></span></p>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <h1 id="print-doc-title" style="margin:0; font-size:24px;">ใบสำคัญจ่าย</h1>
+                            <p id="print-doc-subtitle" style="margin:0; font-weight:bold;">(Payment Voucher)</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:14px;">
+                        <div>
+                            <p><strong>จ่ายให้แก่:</strong> <span id="print-vendor"></span></p>
+                            <p><strong>รายละเอียด:</strong> <span id="print-remarks"></span></p>
+                        </div>
+                        <div style="text-align:right;">
+                            <p><strong>เลขที่เอกสาร:</strong> <span id="print-doc-no"></span></p>
+                            <p><strong>วันที่:</strong> <span id="print-doc-date"></span></p>
+                        </div>
+                    </div>
+                    <table class="print-table">
+                        <thead>
+                            <tr><th>รายการ</th><th width="10%" style="text-align:center">จำนวน</th><th width="15%" style="text-align:right">ราคา/หน่วย</th><th width="20%" style="text-align:right">รวมเป็นเงิน</th></tr>
+                        </thead>
+                        <tbody id="print-items-body"></tbody>
+                    </table>
+                    <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+                        <table style="width:300px; font-size:14px;">
+                            <tr><td style="padding:5px;">มูลค่ารวม:</td><td style="text-align:right" id="print-base">฿0.00</td></tr>
+                            <tr><td style="padding:5px;">VAT 7%:</td><td style="text-align:right" id="print-vat">฿0.00</td></tr>
+                            <tr><td style="padding:5px; color:red;">หัก ณ ที่จ่าย:</td><td style="text-align:right; color:red;" id="print-wht">-฿0.00</td></tr>
+                            <tr><td style="padding:10px 5px; font-weight:bold; border-top:2px solid #000; border-bottom:2px solid #000;">ยอดสุทธิ:</td><td style="padding:10px 5px; font-weight:bold; text-align:right; border-top:2px solid #000; border-bottom:2px solid #000; font-size:18px;" id="print-net">฿0.00</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
         </div>
-
     </div>
+</div>
 
-    <div id="app-section" class="app-layout" style="display: none;">
-
-        
-
-        <aside class="sidebar" id="sidebar">
-
-            <div class="sidebar-header">
-
-                <h3>UM Accounting</h3>
-
-            </div>
-
-            <nav class="sidebar-nav">
-
-                <a href="#" class="nav-item active" data-page="dashboard">ภาพรวม (Dashboard)</a>
-
-                <a href="#" class="nav-item" data-page="document-list">รายการเอกสารทั้งหมด</a>
-
-                <a href="#" class="nav-item" data-page="create-pv">สร้างใบสำคัญจ่าย (PV)</a>
-                <a href="#" class="nav-item" data-page="create-receipt">สร้างหนังสือรับรองฯ</a>
-                <a href="#" class="nav-item" data-page="create-pr">สร้างใบเบิกจ่าย (PR)</a>
-
-                <a href="#" class="nav-item" data-page="company-settings">ตั้งค่าบริษัท (Profile)</a>
-
-                <button id="logout-btn" class="btn-outline" style="margin-top: 2rem; width: 100%;">ออกจากระบบ</button>
-
-            </nav>
-
-        </aside>
-
-        <main class="main-content">
-
-            <header class="topbar">
-
-                <button id="menu-toggle" class="mobile-only">☰ เมนู</button>
-
-                <div class="user-info">
-
-                    <span id="user-email">user@email.com</span>
-
-                </div>
-
-            </header>
-
-            
-
-            <div id="page-content" class="content-area">
-
-                
-
-                <div id="view-dashboard" class="page-view">
-
-                    <h2>ภาพรวมระบบ (Dashboard)</h2>
-
-                    <div class="stats-grid">
-
-                        <div class="stat-card">
-
-                            <h3>เอกสารรออนุมัติ</h3>
-
-                            <p class="stat-number" id="stat-pending">0</p>
-
-                        </div>
-
-                        <div class="stat-card">
-
-                            <h3>จ่ายแล้ว (เดือนนี้)</h3>
-
-                            <p class="stat-number" id="stat-paid">฿0.00</p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <div id="view-document-list" class="page-view" style="display: none;">
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-
-                        <h2>รายการเอกสารทั้งหมด</h2>
-
-                        <button class="btn-primary" style="width: auto; padding: 0.5rem 1rem;" onclick="document.querySelector('[data-page=\'create-pv\']').click()">+ สร้างเอกสารใหม่</button>
-
-                    </div>
-
-                    <div class="glass-panel" style="padding: 1rem; overflow-x: auto;">
-
-                        <table class="data-table" id="main_doc_list">
-
-                            <thead>
-
-                                <tr>
-
-                                    <th>เลขที่เอกสาร</th>
-
-                                    <th>วันที่</th>
-
-                                    <th>ผู้รับเงิน</th>
-
-                                    <th>ยอดสุทธิ</th>
-
-                                    <th>สถานะ</th>
-
-                                    <th>จัดการ</th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody id="doc_list_body">
-
-                                <tr><td colspan="6" style="text-align: center;">กำลังโหลดข้อมูล...</td></tr>
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                </div>
-
-                <div id="view-create-pv" class="page-view" style="display: none;">
-
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-
-                        <h2>ใบสำคัญจ่าย (Payment Voucher)</h2>
-
-                        <div class="status-badge draft" id="doc_status_badge">สถานะ: ร่าง (Draft)</div>
-
-                    </div>
-
-                    
-
-                    <div class="glass-panel form-container">
-
-                        <form id="pv-form">
-
-                            <div class="form-row">
-
-                                <div class="input-group">
-
-                                    <label>วันที่เอกสาร (ISO Format)</label>
-
-                                    <input type="date" id="doc_date" required>
-
-                                </div>
-
-                                <div class="input-group">
-
-                                    <label>ชื่อผู้รับเงิน / Vendor</label>
-
-                                    <input type="text" id="vendor_name" placeholder="บริษัท / นาย / นางสาว..." required>
-
-                                </div>
-
-                                <div class="input-group">
-
-                                    <label>สถานะเอกสาร</label>
-
-                                    <select id="doc_status_select" class="status-dropdown">
-
-                                        <option value="draft">ร่าง (Draft)</option>
-
-                                        <option value="pending">รออนุมัติ (Pending)</option>
-
-                                        <option value="approved">อนุมัติแล้ว (Approved)</option>
-
-                                        <option value="paid">ชำระเงินแล้ว (Paid)</option>
-
-                                    </select>
-
-                                </div>
-
-                            </div>
-
-                            
-
-                            <div class="input-group">
-
-                                <label>รายละเอียด / หมายเหตุ</label>
-
-                                <input type="text" id="remarks" placeholder="ระบุเหตุผลการจ่ายเงิน...">
-
-                            </div>
-
-                            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--border-color);">
-
-                            <h3>รายการสินค้า / บริการ</h3>
-
-                            <div style="overflow-x: auto; margin-top: 1rem;">
-
-                                <table class="item-table" id="items_table" style="width: 100%; min-width: 800px;">
-
-                                    <thead>
-
-                                        <tr>
-
-                                            <th>รายละเอียด</th>
-
-                                            <th width="10%">จำนวน</th>
-
-                                            <th width="15%">ราคา/หน่วย</th>
-
-                                            <th width="10%">ส่วนลด</th>
-
-                                            <th width="8%" style="text-align: center;">VAT 7%</th>
-
-                                            <th width="8%" style="text-align: center;">หัก ณ ที่จ่าย</th>
-
-                                            <th width="15%" style="text-align: right;">รวม</th>
-
-                                            <th width="5%"></th>
-
-                                        </tr>
-
-                                    </thead>
-
-                                    <tbody id="items_body">
-
-                                        </tbody>
-
-                                </table>
-
-                            </div>
-
-                            <button type="button" class="btn-outline" onclick="addNewRow()" style="margin-top: 1rem; width: auto; padding: 0.5rem 1rem;">+ เพิ่มรายการ</button>
-
-                            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--border-color);">
-
-                            <div class="form-row" style="align-items: flex-start;">
-
-                                
-
-                                <div class="attachment-section" style="flex: 1; padding: 1rem; border: 2px dashed var(--border-color); border-radius: 8px;">
-
-                                    <h3>แนบเอกสารประกอบ</h3>
-
-                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">รองรับไฟล์รูปภาพและ PDF</p>
-
-                                    <input type="file" id="file_upload" multiple accept="image/*,.pdf" style="display: none;">
-
-                                    <button type="button" class="btn-outline" onclick="document.getElementById('file_upload').click()">เลือกไฟล์</button>
-
-                                    <div id="thumbnail_grid" class="thumbnail-grid" style="display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap;">
-
-                                        </div>
-
-                                </div>
-
-                                <div class="summary-box" style="flex: 1; min-width: 300px;">
-
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-
-                                        <span>รวมเป็นเงิน:</span>
-
-                                        <span id="summary_base">฿0.00</span>
-
-                                    </div>
-
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #ef4444;">
-
-                                        <span>ส่วนลดรวม:</span>
-
-                                        <span id="summary_discount">-฿0.00</span>
-
-                                    </div>
-
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-
-                                        <span>ยอดหลังหักส่วนลด:</span>
-
-                                        <span id="summary_after_discount">฿0.00</span>
-
-                                    </div>
-
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-
-                                        <span>ภาษีมูลค่าเพิ่ม (VAT 7%):</span>
-
-                                        <span id="summary_vat">฿0.00</span>
-
-                                    </div>
-
-                                    
-
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; color: #ef4444;">
-
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-
-                                            <span>ภาษีหัก ณ ที่จ่าย:</span>
-
-                                            <select id="global_wht_rate" style="padding: 0.2rem; width: auto;">
-
-                                                <option value="0">0%</option>
-
-                                                <option value="1">1%</option>
-
-                                                <option value="3" selected>3%</option>
-
-                                                <option value="5">5%</option>
-
-                                            </select>
-
-                                        </div>
-
-                                        <span id="summary_wht">-฿0.00</span>
-
-                                    </div>
-
-                                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 0.5rem 0;">
-
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-
-                                        <span style="font-weight: 600;">ยอดสุทธิที่ต้องจ่าย (Net):</span>
-
-                                        <strong id="net_amount_display" style="font-size: 1.5rem; color: #10b981;">฿0.00</strong>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-
-                                <button type="button" class="btn-outline" style="width: auto;" id="cancel_btn">ยกเลิก</button>
-
-                                <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 2rem;">บันทึกเอกสาร</button>
-
-                            </div>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-                <div id="view-company-settings" class="page-view" style="display: none;">
-
-                    <h2>ตั้งค่าบริษัท (Company Profile)</h2>
-
-                    <p style="color: var(--text-muted);">ข้อมูลส่วนนี้จะถูกนำไปแสดงเป็นหัวเอกสารเวลาพิมพ์ PDF</p>
-
-                    <div class="glass-panel form-container" style="max-width: 600px;">
-
-                        <form id="company-form">
-
-                            <div class="input-group" style="text-align: center;">
-
-                                <img id="company_logo_preview" src="https://via.placeholder.com/150" alt="Logo Preview" style="width: 150px; height: 150px; object-fit: contain; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background: #fff;">
-
-                                <input type="file" id="company_logo_upload" accept="image/*" style="display: none;">
-
-                                <div><button type="button" class="btn-outline" style="width: auto; padding: 0.5rem 1rem;" onclick="document.getElementById('company_logo_upload').click()">เปลี่ยนโลโก้</button></div>
-
-                            </div>
-
-                            <div class="input-group">
-
-                                <label>ชื่อบริษัท / กิจการ</label>
-
-                                <input type="text" id="comp_name" required>
-
-                            </div>
-
-                            <div class="input-group">
-
-                                <label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>
-
-                                <input type="text" id="comp_tax_id" maxlength="13">
-
-                            </div>
-
-                            <div class="input-group">
-
-                                <label>ที่อยู่สำนักงาน</label>
-
-                                <textarea id="comp_address" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;" required></textarea>
-
-                            </div>
-
-                            <div class="input-group">
-
-                                <label>เบอร์โทรศัพท์</label>
-
-                                <input type="text" id="comp_phone">
-
-                            </div>
-
-                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกการตั้งค่า</button>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-
-<div id="view-create-receipt" class="page-view" style="display: none;">
-                    <h2>หนังสือรับรองแทนใบเสร็จรับเงิน</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 1rem;">ใช้เมื่อผู้รับเงินไม่สามารถออกใบเสร็จรับเงินที่ถูกต้องได้</p>
-                    <div class="glass-panel form-container">
-                        <form id="receipt-form">
-                            <div class="form-row">
-                                <div class="input-group">
-                                    <label>วันที่</label>
-                                    <input type="date" id="rc_date" required>
-                                </div>
-                                <div class="input-group">
-                                    <label>ชื่อผู้รับเงิน (ข้าพเจ้า)</label>
-                                    <input type="text" id="rc_name" placeholder="นาย / นางสาว..." required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="input-group">
-                                    <label>เลขประจำตัวประชาชน (13 หลัก)</label>
-                                    <input type="text" id="rc_citizen_id" maxlength="13" required>
-                                </div>
-                                <div class="input-group">
-                                    <label>ที่อยู่ผู้รับเงิน</label>
-                                    <input type="text" id="rc_address" placeholder="บ้านเลขที่, ถนน, ตำบล, อำเภอ, จังหวัด" required>
-                                </div>
-                            </div>
-                            <div class="input-group">
-                                <label>รายละเอียดการจ่ายเงิน (เพื่อจ่ายค่า...)</label>
-                                <input type="text" id="rc_desc" placeholder="เช่น ค่าแรงเหมาจ่าย, ค่าจ้างขนของ..." required>
-                            </div>
-                            <div class="form-row">
-                                <div class="input-group">
-                                    <label>จำนวนเงินรวม (บาท)</label>
-                                    <input type="number" id="rc_amount" step="0.01" min="0" required>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกหนังสือรับรองฯ</button>
-                        </form>
-                    </div>
-                </div>
-
-                <div id="view-create-pr" class="page-view" style="display: none;">
-                    <h2>สร้างใบเบิกจ่าย (Payment Requisition)</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 1rem;">ใช้สำหรับพนักงานหรือแผนกเพื่อขออนุมัติเบิกเงิน</p>
-                    <div class="glass-panel form-container">
-                        <form id="pr-form">
-                            <div class="form-row">
-                                <div class="input-group">
-                                    <label>วันที่ขอเบิก</label>
-                                    <input type="date" id="pr_date" required>
-                                </div>
-                                <div class="input-group">
-                                    <label>ชื่อผู้ขอเบิก</label>
-                                    <input type="text" id="pr_name" placeholder="ระบุชื่อพนักงาน" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="input-group">
-                                    <label>แผนก / ฝ่าย</label>
-                                    <input type="text" id="pr_dept" required>
-                                </div>
-                                <div class="input-group">
-                                    <label>กำหนดวันที่ต้องการใช้เงิน</label>
-                                    <input type="date" id="pr_due_date" required>
-                                </div>
-                            </div>
-                            <div class="input-group">
-                                <label>วัตถุประสงค์การเบิก</label>
-                                <input type="text" id="pr_desc" placeholder="เช่น ซื้ออุปกรณ์สำนักงาน, ค่าเดินทาง..." required>
-                            </div>
-                            <div class="form-row">
-                                <div class="input-group">
-                                    <label>จำนวนเงินที่ขอเบิก (บาท)</label>
-                                    <input type="number" id="pr_amount" step="0.01" min="0" required>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกใบเบิกจ่าย</button>
-                        </form>
-                    </div>
-                </div>
-                
-                <div id="view-print" class="page-view" style="display: none;">
-                    <div class="print-actions no-print" style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
-                        <button class="btn-outline" onclick="document.querySelector('[data-page=\'document-list\']').click()">⬅ กลับไปหน้ารายการ</button>
-                        <button class="btn-primary" onclick="window.print()">🖨️ สั่งพิมพ์ / Save as PDF</button>
-                    </div>
-
-                    <div class="a4-paper" id="print-document-container">
-                        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 1rem; margin-bottom: 1rem;">
-                            <div style="display: flex; gap: 1rem; align-items: center;">
-                                <img id="print_logo" src="" alt="Logo" style="max-height: 80px; max-width: 150px; display: none;">
-                                <div>
-                                    <h2 id="print_comp_name" style="margin: 0; font-size: 1.5rem;">ชื่อบริษัท</h2>
-                                    <p id="print_comp_address" style="margin: 0; font-size: 0.9rem; color: #333;"></p>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #333;">เลขประจำตัวผู้เสียภาษี: <span id="print_comp_tax"></span> | โทร: <span id="print_comp_phone"></span></p>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <h1 style="margin: 0; font-size: 1.8rem; color: #000;">ใบสำคัญจ่าย</h1>
-                                <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">(Payment Voucher)</p>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
-                            <div style="flex: 1;">
-                                <p><strong>จ่ายให้แก่:</strong> <span id="print_vendor_name"></span></p>
-                                <p><strong>รายละเอียด:</strong> <span id="print_remarks"></span></p>
-                            </div>
-                            <div style="flex: 1; text-align: right;">
-                                <p><strong>เลขที่เอกสาร:</strong> <span id="print_doc_no"></span></p>
-                                <p><strong>วันที่:</strong> <span id="print_doc_date"></span></p>
-                            </div>
-                        </div>
-
-                        <table class="print-table" style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
-                            <thead>
-                                <tr>
-                                    <th style="border: 1px solid #000; padding: 8px; text-align: left;">รายการ</th>
-                                    <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 10%;">จำนวน</th>
-                                    <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 15%;">ราคา/หน่วย</th>
-                                    <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 15%;">ส่วนลด</th>
-                                    <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 20%;">รวมเป็นเงิน</th>
-                                </tr>
-                            </thead>
-                            <tbody id="print_items_body">
-                                </tbody>
-                        </table>
-
-                        <div style="display: flex; justify-content: space-between;">
-                            <div style="flex: 1.5;">
-                                <div style="display: flex; justify-content: space-around; margin-top: 3rem; text-align: center;">
-                                    <div>
-                                        <p>_______________________</p>
-                                        <p>ผู้จัดทำเอกสาร</p>
-                                    </div>
-                                    <div>
-                                        <p>_______________________</p>
-                                        <p>ผู้อนุมัติ</p>
-                                    </div>
-                                    <div>
-                                        <p>_______________________</p>
-                                        <p>ผู้รับเงิน</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div style="flex: 1; margin-left: 2rem;">
-                                <table style="width: 100%; border-collapse: collapse;">
-                                    <tr><td style="padding: 4px;">มูลค่าสินค้า/บริการ:</td><td style="text-align: right;" id="print_total_base">฿0.00</td></tr>
-                                    <tr><td style="padding: 4px;">ภาษีมูลค่าเพิ่ม (VAT):</td><td style="text-align: right;" id="print_total_vat">฿0.00</td></tr>
-                                    <tr><td style="padding: 4px; color: red;">ภาษีหัก ณ ที่จ่าย:</td><td style="text-align: right; color: red;" id="print_total_wht">-฿0.00</td></tr>
-                                    <tr>
-                                        <td style="padding: 8px; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000;">ยอดจ่ายสุทธิ:</td>
-                                        <td style="padding: 8px; font-weight: bold; text-align: right; border-top: 2px solid #000; border-bottom: 2px solid #000; font-size: 1.2rem;" id="print_net_amount">฿0.00</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                
-            </div>
-
-        </main>
-
-    </div>
-
-    <script type="module" src="supabaseClient.js"></script>
-
-    <script type="module" src="app.js"></script>
-
+<script type="module" src="supabaseClient.js"></script>
+<script type="module" src="app.js"></script>
 </body>
-
 </html>
