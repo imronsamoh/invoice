@@ -356,3 +356,85 @@ pvForm.addEventListener('submit', async (e) => {
 
 // เรียกดึงข้อมูลบริษัททันทีที่เปิดแอป
 loadCompanySettings();
+
+// ==========================================
+// ส่วนที่ 8: ระบบแสดงรายการเอกสาร (Document List) และ Dashboard
+// ==========================================
+
+// ฟังก์ชันดึงข้อมูลเอกสารทั้งหมดจาก Supabase
+async function loadDocuments() {
+    const tbody = document.getElementById('doc_list_body');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">กำลังโหลดข้อมูล...</td></tr>';
+
+    // ดึงข้อมูลจากตาราง documents เรียงจากใหม่ไปเก่า
+    const { data, error } = await supabase
+        .from('documents')
+        .select('id, doc_no, doc_date, vendor_name, net_amount, status')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching documents:", error);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">ยังไม่มีเอกสารในระบบ ลองสร้างใบสำคัญจ่ายดูสิ!</td></tr>';
+        updateDashboardStats(0, 0); // อัปเดต Dashboard เป็น 0
+        return;
+    }
+
+    tbody.innerHTML = '';
+    let pendingCount = 0;
+    let paidSum = 0;
+
+    // วนลูปสร้างตารางทีละบรรทัด
+    data.forEach(doc => {
+        // --- 1. คำนวณข้อมูลสำหรับ Dashboard ---
+        if (doc.status === 'pending') pendingCount++;
+        if (doc.status === 'paid') paidSum += parseFloat(doc.net_amount) || 0;
+
+        // --- 2. ตกแต่งป้ายสถานะ (Badge) ให้สวยงาม ---
+        let statusBadge = '';
+        switch(doc.status) {
+            case 'draft': 
+                statusBadge = '<span style="background:#f3f4f6; color:#374151; padding:4px 8px; border-radius:12px; font-size:0.85em;">ร่าง (Draft)</span>'; break;
+            case 'pending': 
+                statusBadge = '<span style="background:#fef3c7; color:#d97706; padding:4px 8px; border-radius:12px; font-size:0.85em; font-weight:bold;">รออนุมัติ</span>'; break;
+            case 'approved': 
+                statusBadge = '<span style="background:#dbeafe; color:#2563eb; padding:4px 8px; border-radius:12px; font-size:0.85em;">อนุมัติแล้ว</span>'; break;
+            case 'paid': 
+                statusBadge = '<span style="background:#d1fae5; color:#059669; padding:4px 8px; border-radius:12px; font-size:0.85em; font-weight:bold;">ชำระเงินแล้ว</span>'; break;
+        }
+
+        // --- 3. สร้างแถวข้อมูล HTML ---
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight: 500;">${doc.doc_no}</td>
+            <td>${doc.doc_date}</td>
+            <td>${doc.vendor_name}</td>
+            <td style="text-align: right; font-weight: bold; color: #10b981;">฿${parseFloat(doc.net_amount).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+            <td style="text-align: center;">${statusBadge}</td>
+            <td style="text-align: center;">
+                <button class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.85rem;" onclick="alert('ฟังก์ชันดู/แก้ไข กำลังมาใน Part หน้าครับ!')">ดู/แก้ไข</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // อัปเดตตัวเลขหน้า Dashboard
+    updateDashboardStats(pendingCount, paidSum);
+}
+
+// ฟังก์ชันอัปเดตตัวเลขหน้า Dashboard
+function updateDashboardStats(pending, paidSum) {
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-paid').textContent = `฿${paidSum.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+}
+
+// ผูก Event: ให้รีเฟรชข้อมูลทุกครั้งที่กดเมนู "รายการเอกสารทั้งหมด" หรือ "Dashboard"
+document.querySelector('[data-page="document-list"]').addEventListener('click', loadDocuments);
+document.querySelector('[data-page="dashboard"]').addEventListener('click', loadDocuments);
+
+// สั่งโหลดข้อมูลทันทีเมื่อเปิดแอปขึ้นมาครั้งแรก
+loadDocuments();
