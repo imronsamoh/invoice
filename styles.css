@@ -168,3 +168,75 @@ input {
     .sidebar { position: fixed; height: 100%; z-index: 50; transform: translateX(-100%); }
     .sidebar.open { transform: translateX(0); }
 }
+
+/* --- ส่วนเพิ่มเติมสำหรับ Layout ย่อย --- */
+.page-view {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.form-container {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-row .input-group {
+    flex: 1;
+}
+
+select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: var(--white);
+}
+
+.summary-box {
+    background-color: #f0fdf4;
+    border: 1px dashed #22c55e;
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: right;
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
