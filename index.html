@@ -77,36 +77,77 @@
                                 </div>
                                 <div class="input-group">
                                     <label>ชื่อผู้รับเงิน / Vendor</label>
-                                    <input type="text" id="vendor_name" placeholder="บริษัท / นาย..." required>
+                                    <input type="text" id="vendor_name" placeholder="บริษัท / นาย / นางสาว..." required>
                                 </div>
                             </div>
                             
                             <div class="input-group">
                                 <label>รายละเอียดการจ่าย</label>
-                                <input type="text" id="remarks" placeholder="ค่าสินค้า, ค่าบริการ..." required>
+                                <input type="text" id="remarks" placeholder="เช่น ค่าสั่งสกรีนเสื้อ, ค่าขนส่ง..." required>
                             </div>
 
                             <div class="form-row">
                                 <div class="input-group">
-                                    <label>ยอดก่อนภาษี (บาท)</label>
-                                    <input type="number" id="base_amount" step="0.01" required>
+                                    <label>มูลค่าสินค้า/บริการ (บาท)</label>
+                                    <input type="number" id="base_amount" step="0.01" min="0" required>
                                 </div>
                                 <div class="input-group">
-                                    <label>หัก ณ ที่จ่าย (%)</label>
+                                    <label>ส่วนลด (บาท)</label>
+                                    <input type="number" id="discount" step="0.01" min="0" value="0">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>ภาษีมูลค่าเพิ่ม (VAT)</label>
+                                    <select id="vat_rate">
+                                        <option value="0">ไม่มี / ไม่จด VAT (0%)</option>
+                                        <option value="7">คิด VAT 7%</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>หัก ณ ที่จ่าย (WHT)</label>
                                     <select id="wht_rate">
-                                        <option value="0">ไม่มีหัก ณ ที่จ่าย</option>
+                                        <option value="0">ไม่มีหัก ณ ที่จ่าย (0%)</option>
                                         <option value="1">1% (ค่าขนส่ง)</option>
-                                        <option value="3">3% (ค่าบริการ)</option>
+                                        <option value="3">3% (ค่าบริการ/รับจ้างทำของ)</option>
                                         <option value="5">5% (ค่าเช่า)</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="summary-box">
-                                <p>ยอดสุทธิที่ต้องจ่าย: <strong id="net_amount_display" style="font-size: 1.5rem; color: #10b981;">฿0.00</strong></p>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>รายการหักอื่นๆ (บาท)</label>
+                                    <input type="number" id="other_deductions" step="0.01" min="0" value="0" placeholder="เช่น หักเงินมัดจำล่วงหน้า">
+                                </div>
                             </div>
 
-                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">บันทึกเอกสาร</button>
+                            <div class="summary-box">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
+                                    <span>ยอดหลังหักส่วนลด:</span>
+                                    <span id="summary_after_discount">฿0.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
+                                    <span>ภาษีมูลค่าเพิ่ม (VAT):</span>
+                                    <span id="summary_vat">฿0.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #ef4444;">
+                                    <span>ภาษีหัก ณ ที่จ่าย (WHT):</span>
+                                    <span id="summary_wht">-฿0.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #ef4444;">
+                                    <span>รายการหักอื่นๆ:</span>
+                                    <span id="summary_other">-฿0.00</span>
+                                </div>
+                                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 0.5rem 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 600;">ยอดสุทธิที่ต้องจ่าย (Net):</span>
+                                    <strong id="net_amount_display" style="font-size: 1.5rem; color: #10b981;">฿0.00</strong>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">บันทึกเอกสาร</button>
                         </form>
                     </div>
                 </div>
