@@ -466,68 +466,6 @@
         </main>
     </div>
 
-    <script type="module" src="supabaseClient.js"></script>
-    <script type="module" src="app.js"></script>
-    <!-- เพิ่มการทำงาน UI เบื้องต้นเพื่อให้เมนู/แท็บทำงาน (เชื่อมกับ app.js เดิมได้) -->
-    <script>
-        (function(){
-            // ทำให้ไอคอน Lucide ทำงาน
-            lucide.createIcons();
-            
-            // จำลองการสลับหน้า (ไม่กระทบโค้ด app.js เดิม)
-            window.addEventListener('load', function() {
-                const navItems = document.querySelectorAll('.nav-item');
-                const pages = {
-                    dashboard: document.getElementById('view-dashboard'),
-                    'document-list': document.getElementById('view-document-list'),
-                    'create-pv': document.getElementById('view-create-pv'),
-                    'company-settings': document.getElementById('view-company-settings')
-                };
-                
-                function switchPage(pageId) {
-                    Object.values(pages).forEach(p => p.style.display = 'none');
-                    if(pages[pageId]) pages[pageId].style.display = 'block';
-                    navItems.forEach(n => n.classList.remove('active'));
-                    document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
-                    // ปิด sidebar บนมือถือ
-                    document.getElementById('sidebar')?.classList.remove('open');
-                }
-
-                navItems.forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const page = item.dataset.page;
-                        if(page) switchPage(page);
-                    });
-                });
-
-                // Mobile toggle
-                document.getElementById('menu-toggle')?.addEventListener('click', ()=>{
-                    document.getElementById('sidebar')?.classList.toggle('open');
-                });
-
-                // จำลอง addNewRow สำหรับทดสอบ (ถ้าไม่มีใน app.js)
-                window.addNewRow = function() {
-                    const tbody = document.getElementById('items_body');
-                    if(tbody) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `<td><input placeholder="รายการ" style="width:100%; padding:6px;"></td>
-                        <td><input type="number" value="1" style="width:80px;"></td>
-                        <td><input type="number" value="0" style="width:100px;"></td>
-                        <td><input type="number" value="0" style="width:80px;"></td>
-                        <td style="text-align:center;"><input type="checkbox"></td>
-                        <td style="text-align:center;"><input type="checkbox"></td>
-                        <td>฿0.00</td><td><button type="button">🗑️</button></td>`;
-                        tbody.appendChild(tr);
-                    }
-                };
-                // เรียกครั้งแรกให้มีแถวตัวอย่าง
-                if(document.getElementById('items_body') && document.getElementById('items_body').children.length === 0) {
-                    addNewRow();
-                }
-            });
-        })();
-    </script>
-    <!-- NOTE: ต้องมี supabaseClient.js และ app.js ตามโครงสร้างเดิม -->
+    
 </body>
 </html>
