@@ -544,3 +544,119 @@ window.printDocument = async (documentId) => {
         alert("เกิดข้อผิดพลาดในการดึงข้อมูลเพื่อพิมพ์: " + error.message);
     }
 };
+
+// ==========================================
+// ส่วนที่ 11: การบันทึกหนังสือรับรองแทนใบเสร็จรับเงิน (RC)
+// ==========================================
+const receiptForm = document.getElementById('receipt-form');
+if(receiptForm) {
+    receiptForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return alert('กรุณาล็อกอินใหม่');
+
+        const btn = receiptForm.querySelector('button');
+        btn.textContent = 'กำลังบันทึก...';
+        btn.disabled = true;
+
+        try {
+            const amount = parseFloat(document.getElementById('rc_amount').value) || 0;
+            const desc = document.getElementById('rc_desc').value;
+            const citizenId = document.getElementById('rc_citizen_id').value;
+            const address = document.getElementById('rc_address').value;
+
+            // 1. บันทึกหัวเอกสาร
+            const docPayload = {
+                doc_no: `RC${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2, '0')}${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`,
+                doc_type: 'receipt_certificate',
+                doc_date: document.getElementById('rc_date').value,
+                vendor_name: document.getElementById('rc_name').value,
+                status: 'paid', // หนังสือรับรองฯ มักจะหมายถึงจ่ายเงินสดไปแล้ว
+                remarks: `เลขบัตร: ${citizenId} | ที่อยู่: ${address}`, // เก็บข้อมูลเพิ่มเติมไว้ในหมายเหตุ
+                total_amount_before_vat: amount,
+                net_amount: amount,
+                created_by: user.id
+            };
+
+            const { data: doc, error: docErr } = await supabase.from('documents').insert([docPayload]).select('id').single();
+            if (docErr) throw docErr;
+
+            // 2. บันทึกรายการย่อย
+            const itemPayload = {
+                document_id: doc.id,
+                description: desc,
+                qty: 1,
+                unit_price: amount
+            };
+            const { error: itemErr } = await supabase.from('document_items').insert([itemPayload]);
+            if (itemErr) throw itemErr;
+
+            alert('บันทึกหนังสือรับรองฯ สำเร็จ!');
+            receiptForm.reset();
+            document.querySelector('[data-page="document-list"]').click(); // กลับหน้ารวม
+        } catch (err) {
+            alert('ข้อผิดพลาด: ' + err.message);
+        } finally {
+            btn.textContent = 'บันทึกหนังสือรับรองฯ';
+            btn.disabled = false;
+        }
+    });
+}
+
+// ==========================================
+// ส่วนที่ 12: การบันทึกใบเบิกจ่าย (PR)
+// ==========================================
+const prForm = document.getElementById('pr-form');
+if(prForm) {
+    prForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return alert('กรุณาล็อกอินใหม่');
+
+        const btn = prForm.querySelector('button');
+        btn.textContent = 'กำลังบันทึก...';
+        btn.disabled = true;
+
+        try {
+            const amount = parseFloat(document.getElementById('pr_amount').value) || 0;
+            const desc = document.getElementById('pr_desc').value;
+            const dept = document.getElementById('pr_dept').value;
+
+            // 1. บันทึกหัวเอกสาร
+            const docPayload = {
+                doc_no: `PR${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2, '0')}${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`,
+                doc_type: 'payment_requisition',
+                doc_date: document.getElementById('pr_date').value,
+                due_date: document.getElementById('pr_due_date').value,
+                vendor_name: document.getElementById('pr_name').value, // ยืมช่อง vendor เก็บชื่อพนักงาน
+                status: 'pending', // เบิกเงินต้องรอการอนุมัติเสมอ
+                remarks: `แผนก: ${dept} | วัตถุประสงค์: ${desc}`,
+                total_amount_before_vat: amount,
+                net_amount: amount,
+                created_by: user.id
+            };
+
+            const { data: doc, error: docErr } = await supabase.from('documents').insert([docPayload]).select('id').single();
+            if (docErr) throw docErr;
+
+            // 2. บันทึกรายการย่อย
+            const itemPayload = {
+                document_id: doc.id,
+                description: desc,
+                qty: 1,
+                unit_price: amount
+            };
+            const { error: itemErr } = await supabase.from('document_items').insert([itemPayload]);
+            if (itemErr) throw itemErr;
+
+            alert('บันทึกใบเบิกจ่าย สำเร็จ!');
+            prForm.reset();
+            document.querySelector('[data-page="document-list"]').click(); // กลับหน้ารวม
+        } catch (err) {
+            alert('ข้อผิดพลาด: ' + err.message);
+        } finally {
+            btn.textContent = 'บันทึกใบเบิกจ่าย';
+            btn.disabled = false;
+        }
+    });
+}
