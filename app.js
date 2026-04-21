@@ -47,63 +47,42 @@ navItems.forEach(item => {
 document.getElementById('menu-toggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); });
 
 // ==========================================
-// ส่วนที่ 1: การจัดการ Auth และเข้าสู่ระบบ
+// 2. ระบบ Login & Auth
 // ==========================================
-const loginSection = document.getElementById('login-section');
-const appSection = document.getElementById('app-section');
-const loginForm = document.getElementById('login-form');
-const logoutBtn = document.getElementById('logout-btn');
-
-async function checkUser() {
+async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-        showApp(session.user);
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('app-section').style.display = 'flex';
+        document.getElementById('user-email-display').textContent = session.user.email;
+        loadCompanySettings();
+        window.loadDocuments();
     } else {
-        showLogin();
+        document.getElementById('login-section').style.display = 'flex';
+        document.getElementById('app-section').style.display = 'none';
     }
 }
+checkAuth();
 
-function showApp(user) {
-    loginSection.style.display = 'none';
-    appSection.style.display = 'flex';
-    document.getElementById('user-email').textContent = user.email;
-}
-
-function showLogin() {
-    loginSection.style.display = 'flex';
-    appSection.style.display = 'none';
-}
-
-loginForm.addEventListener('submit', async (e) => {
+document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const loginBtn = document.getElementById('login-btn');
-    const errorMsg = document.getElementById('login-error');
-    
-    loginBtn.textContent = 'กำลังตรวจสอบ...';
-    loginBtn.disabled = true;
-    errorMsg.style.display = 'none';
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
+    const btn = document.getElementById('login-btn');
+    btn.textContent = 'กำลังตรวจสอบ...'; btn.disabled = true;
+    const { error } = await supabase.auth.signInWithPassword({
+        email: document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value
+    });
     if (error) {
-        errorMsg.textContent = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
-        errorMsg.style.display = 'block';
-        loginBtn.textContent = 'เข้าสู่ระบบ';
-        loginBtn.disabled = false;
+        window.showAlert('danger', 'เกิดข้อผิดพลาด', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+        btn.textContent = 'เข้าสู่ระบบ'; btn.disabled = false;
     } else {
-        loginForm.reset();
-        loginBtn.textContent = 'เข้าสู่ระบบ';
-        loginBtn.disabled = false;
-        showApp(data.user);
+        window.showAlert('success', 'สำเร็จ', 'เข้าสู่ระบบเรียบร้อย');
+        checkAuth();
     }
 });
 
-logoutBtn.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    showLogin();
-});
+document.getElementById('logout-btn').addEventListener('click', async () => { await supabase.auth.signOut(); checkAuth(); });
+
 
 // ==========================================
 // ส่วนที่ 2: ระบบจัดการเมนู (Navigation)
